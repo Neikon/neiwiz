@@ -48,6 +48,9 @@ kpackagetool6 --type Plasma/Applet --list | grep org.neikon.neiwiz
 - El interruptor enciende o apaga la bombilla.
 - El deslizador regula la intensidad. El valor se envía al soltar, no mientras
   se arrastra.
+- El botón de lápiz cambia el nombre de la bombilla. El nombre se guarda solo en
+  NeiWiz, asociado a su MAC, y no se escribe en la bombilla ni en la app WiZ.
+  Déjalo vacío para volver al nombre automático «Bombilla XXXX».
 - **Actualizar estado** vuelve a consultar todas las bombillas.
 - **Buscar bombillas** fuerza un descubrimiento nuevo.
 - Si una bombilla no responde, se muestra atenuada como «Sin conexión» y no
@@ -67,7 +70,8 @@ Plasma (plasmashell)
     ├── Icono en la bandeja
     ├── Panel: lista, interruptores y deslizadores
     ├── ExecRunner: Plasma5Support.DataSource (engine "executable")
-    └── knownBulbs: [{ip, mac}] persistido en la configuración del applet
+    ├── knownBulbs: [{ip, mac}] persistido en la configuración del applet
+    └── bulbNames: {MAC: nombre} persistido en la configuración del applet
              │
              │  comando puntual, termina al responder
              ▼
@@ -86,8 +90,9 @@ inesperada termina con código 1. El QML detecta el código 127 para mostrar la
 ayuda de instalación cuando falta el entorno Python.
 
 No se guarda el estado de encendido: solo la lista de bombillas conocidas
-(`knownBulbs`). Si se pierde la configuración del applet, la siguiente apertura
-vuelve a descubrir.
+(`knownBulbs`) y los nombres personalizados (`bulbNames`, con la MAC como
+clave). Si se pierde la configuración del applet, la siguiente apertura vuelve
+a descubrir y los nombres vuelven a ser automáticos.
 
 ## Solución de problemas
 
@@ -174,8 +179,8 @@ Archivos principales:
 ```
 
 Elimina el plasmoid y `~/.local/share/neiwiz`, pero conserva la configuración
-del applet. Si quieres borrar también las bombillas recordadas, elimina el
-widget de la bandeja y su grupo en
+del applet. Si quieres borrar también las bombillas y los nombres recordados,
+elimina el widget de la bandeja y su grupo en
 `~/.config/plasma-org.kde.plasma.desktop-appletsrc`.
 
 ## Licencia

@@ -10,6 +10,8 @@ Item {
     property int rowIndex: -1
     property string bulbName: ""
     property string ip: ""
+    property string mac: ""
+    property string customName: ""
     property bool online: false
     property bool isOn: false
     property int brightness: 100
@@ -17,6 +19,7 @@ Item {
 
     signal powerToggled(int index, bool on)
     signal brightnessCommitted(int index, int value)
+    signal renameRequested(int index, string currentName)
 
     width: ListView.view ? ListView.view.width : implicitWidth
     implicitHeight: content.implicitHeight + Kirigami.Units.smallSpacing * 2
@@ -106,6 +109,23 @@ Item {
             text: root.online && root.isOn ? Math.round(brightnessSlider.value) + " %" : "—"
             font: Kirigami.Theme.smallFont
             opacity: root.online && root.isOn ? 1 : 0.5
+        }
+
+        PlasmaComponents3.ToolButton {
+            id: renameButton
+
+            Layout.alignment: Qt.AlignVCenter
+            icon.name: "edit-rename"
+            text: "Cambiar nombre"
+            display: PlasmaComponents3.AbstractButton.IconOnly
+            enabled: root.mac.length > 0
+            opacity: enabled ? 1 : 0.4
+            onClicked: root.renameRequested(root.rowIndex, root.customName)
+
+            PlasmaComponents3.ToolTip {
+                text: "Cambiar nombre"
+                visible: renameButton.hovered
+            }
         }
 
         PlasmaComponents3.BusyIndicator {

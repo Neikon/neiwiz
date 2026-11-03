@@ -12,6 +12,7 @@ la aplicación del móvil.
 - Verlas en un panel desplegable desde la bandeja.
 - Encender y apagar cada bombilla.
 - Regular la intensidad de cada bombilla.
+- Renombrar cada bombilla localmente, guardando el nombre por MAC.
 - Recordar las bombillas descubiertas entre aperturas y reinicios de Plasma.
 - Funcionar sin permisos de administrador y sin ningún servicio residente.
 
@@ -19,7 +20,6 @@ la aplicación del móvil.
 
 - Colores, temperatura de color, escenas o efectos.
 - Grupos, habitaciones o control global «todas».
-- Renombrar bombillas.
 - Horarios, automatizaciones, integración con la nube o con Home Assistant.
 - Notificaciones o sincronización en tiempo real con cambios hechos desde el
   móvil.
@@ -91,8 +91,9 @@ búsqueda lanzan el helper; al terminar, no queda nada ejecutándose.
 - Cabecera con «NeiWiz», botón de actualizar estado y botón de buscar.
 - Lista desplazable de filas:
   - interruptor;
-  - nombre (`Bombilla F94D`, derivado de la MAC) e IP;
+  - nombre (personalizado o `Bombilla F94D`, derivado de la MAC) e IP;
   - deslizador de 1 a 100 % y porcentaje;
+  - botón de lápiz para cambiar el nombre, con diálogo;
   - estado «Sin conexión» cuando corresponda.
 - Estados vacíos:
   - sin bombillas: explicación y botón de buscar;
@@ -102,9 +103,12 @@ búsqueda lanzan el helper; al terminar, no queda nada ejecutándose.
 
 ## Datos y persistencia
 
-La configuración del applet guarda `knownBulbs`, un JSON con `[{ip, mac}]`.
-No se guarda el estado de encendido; se consulta al abrir. Si se pierde la
-configuración, la siguiente apertura vuelve a descubrir.
+La configuración del applet guarda `knownBulbs`, un JSON con `[{ip, mac}]`, y
+`bulbNames`, un JSON `{MAC: nombre}` con los nombres personalizados. Los nombres
+son locales: no se escriben en la bombilla ni en la app WiZ. Un nombre vacío
+elimina la entrada y vuelve al nombre automático. No se guarda el estado de
+encendido; se consulta al abrir. Si se pierde la configuración, la siguiente
+apertura vuelve a descubrir y los nombres vuelven a ser automáticos.
 
 ## Instalación
 
@@ -137,6 +141,6 @@ configuración, la siguiente apertura vuelve a descubrir.
 - ID: `org.neikon.neiwiz`.
 - Categoría de bandeja: Hardware.
 - Iconos: `flashlight-on-symbolic` / `flashlight-off-symbolic`.
-- Sin control global en la v1.
-- Sin renombrado en la v1.
+- Sin control global.
+- Renombrado local por MAC; no se escribe en la bombilla.
 - Licencia MIT.

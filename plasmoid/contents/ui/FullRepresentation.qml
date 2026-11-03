@@ -14,6 +14,7 @@ PlasmaExtras.Representation {
     property bool anyOn: false
     property int onCount: 0
     property bool allOffline: false
+    property int renameIndex: -1
 
     readonly property bool helperMissing: lastError.indexOf("Falta el motor") >= 0
 
@@ -21,6 +22,13 @@ PlasmaExtras.Representation {
     signal discoverRequested()
     signal powerToggled(int index, bool on)
     signal brightnessChanged(int index, int value)
+    signal renameRequested(int index, string name)
+
+    function openRenameDialog(index, currentName) {
+        renameIndex = index;
+        renameField.text = String(currentName || "");
+        renameDialog.open();
+    }
 
     Layout.minimumWidth: Kirigami.Units.gridUnit * 22
     Layout.minimumHeight: Kirigami.Units.gridUnit * 12
@@ -159,6 +167,8 @@ PlasmaExtras.Representation {
                     rowIndex: index
                     bulbName: model.name
                     ip: model.ip
+                    mac: model.mac
+                    customName: model.customName
                     online: model.online
                     isOn: model.on
                     brightness: model.brightness
@@ -169,6 +179,9 @@ PlasmaExtras.Representation {
                     }
                     onBrightnessCommitted: function(index, value) {
                         root.brightnessChanged(index, value);
+                    }
+                    onRenameRequested: function(index, currentName) {
+                        root.openRenameDialog(index, currentName);
                     }
                 }
             }
@@ -217,6 +230,51 @@ PlasmaExtras.Representation {
                 text: "Buscando bombillas…"
                 opacity: 0.7
             }
+        }
+    }
+
+    Kirigami.PromptDialog {
+        id: renameDialog
+
+        title: "Cambiar nombre"
+        preferredWidth: Kirigami.Units.gridUnit * 18
+        anchors.centerIn: parent
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: "Guardar"
+                icon.name: "dialog-ok"
+                onTriggered: renameDialog.accept()
+            },
+            Kirigami.Action {
+                text: "Cancelar"
+                icon.name: "dialog-cancel"
+                onTriggered: renameDialog.reject()
+            }
+        ]
+
+        onOpened: {
+            renameField.forceActiveFocus();
+            renameField.selectAll();
+        }
+        onAccepted: {
+            root.renameRequested(root.renameIndex, renameField.text);
+        }
+
+        PlasmaComponents3.TextField {
+            id: renameField
+
+            Layout.fillWidth: true
+            placeholderText: "Nombre personalizado"
+            onAccepted: renameDialog.accept()
+        }
+
+        PlasmaComponents3.Label {
+            Layout.fillWidth: true
+            text: "Déjalo vacío para volver al nombre automático."
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
+            wrapMode: Text.Wrap
         }
     }
 }

@@ -20,6 +20,7 @@ PlasmoidItem {
     readonly property string defaultHelperScript: "$HOME/.local/share/neiwiz/wizhelper.py"
 
     property ListModel bulbsModel: ListModel {}
+    property var customNames: ({})
     property bool busy: false
     property bool ready: false
     property bool autoDiscoverTried: false
@@ -77,13 +78,86 @@ PlasmoidItem {
             + (args ? " " + args : "");
     }
 
+    function normalizeMac(mac) {
+        return String(mac || "").toUpperCase().replace(/[^0-9A-F]/g, "");
+    }
+
+    function customNameFor(mac) {
+        const clean = normalizeMac(mac);
+        if (clean.length === 0 || !customNames || typeof customNames !== "object") {
+            return "";
+        }
+        const value = customNames[clean];
+        return typeof value === "string" ? value : "";
+    }
+
     function bulbName(mac, ip) {
-        const clean = String(mac || "").toUpperCase().replace(/[^0-9A-F]/g, "");
+        const custom = customNameFor(mac);
+        if (custom.length > 0) {
+            return custom;
+        }
+        const clean = normalizeMac(mac);
         if (clean.length >= 4) {
             return "Bombilla " + clean.slice(-4);
         }
         const octets = String(ip || "").split(".");
         return "Bombilla " + (octets.length > 0 ? octets[octets.length - 1] : "WiZ");
+    }
+
+    function loadCustomNames() {
+        let names = {};
+        try {
+            const parsed = JSON.parse(Plasmoid.configuration.bulbNames || "{}");
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                for (const key in parsed) {
+                    if (typeof parsed[key] !== "string") {
+                        continue;
+                    }
+                    const clean = normalizeMac(key);
+                    const name = parsed[key].trim();
+                    if (clean.length > 0 && name.length > 0) {
+                        names[clean] = name;
+                    }
+                }
+            }
+        } catch (error) {
+            lastError = "La lista guardada de nombres no es válida.";
+        }
+        customNames = names;
+    }
+
+    function updateModelNames() {
+        for (let i = 0; i < bulbsModel.count; ++i) {
+            const item = bulbsModel.get(i);
+            bulbsModel.setProperty(i, "customName", customNameFor(item.mac));
+            bulbsModel.setProperty(i, "name", bulbName(item.mac, item.ip));
+        }
+    }
+
+    function renameBulb(index, name) {
+        if (index < 0 || index >= bulbsModel.count) {
+            return;
+        }
+        const item = bulbsModel.get(index);
+        const key = normalizeMac(item.mac);
+        if (key.length === 0) {
+            return;
+        }
+
+        const next = {};
+        for (const existing in customNames) {
+            next[existing] = customNames[existing];
+        }
+        const trimmed = String(name || "").trim();
+        if (trimmed.length > 0) {
+            next[key] = trimmed;
+        } else {
+            delete next[key];
+        }
+
+        customNames = next;
+        Plasmoid.configuration.bulbNames = JSON.stringify(next);
+        updateModelNames();
     }
 
     function clampBrightness(value) {
@@ -115,6 +189,7 @@ PlasmoidItem {
                 ip: entry.ip,
                 mac: typeof entry.mac === "string" ? entry.mac : "",
                 name: bulbName(entry.mac, entry.ip),
+                customName: customNameFor(entry.mac),
                 online: false,
                 on: false,
                 brightness: 100,
@@ -209,6 +284,7 @@ PlasmoidItem {
             bulbsModel.setProperty(index, "brightness", clampBrightness(state.brightness));
             if (typeof state.mac === "string" && state.mac.length > 0) {
                 bulbsModel.setProperty(index, "mac", state.mac);
+                bulbsModel.setProperty(index, "customName", customNameFor(state.mac));
                 bulbsModel.setProperty(index, "name", bulbName(state.mac, state.ip));
             }
             bulbsModel.setProperty(index, "busy", false);
@@ -271,6 +347,7 @@ PlasmoidItem {
                     ip: bulb.ip,
                     mac: typeof bulb.mac === "string" ? bulb.mac : "",
                     name: bulbName(bulb.mac, bulb.ip),
+                    customName: customNameFor(bulb.mac),
                     online: bulb.online === true,
                     on: bulb.on === true,
                     brightness: clampBrightness(bulb.brightness),
@@ -355,6 +432,7 @@ PlasmoidItem {
     }
 
     Component.onCompleted: {
+        loadCustomNames();
         loadKnownBulbs();
         ready = true;
         if (expanded) {
@@ -404,6 +482,9 @@ PlasmoidItem {
         }
         onBrightnessChanged: function(index, value) {
             root.setBrightness(index, value);
+        }
+        onRenameRequested: function(index, name) {
+            root.renameBulb(index, name);
         }
     }
 }

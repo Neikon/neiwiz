@@ -6,21 +6,26 @@ APPLET_ID="org.neikon.neiwiz"
 
 ui_dir="$ROOT/plasmoid/contents/ui"
 main_qml="$ui_dir/main.qml"
-for token in ExecRunner knownBulbs refreshState; do
+for token in ExecRunner knownBulbs refreshState bulbNames renameBulb; do
     if ! grep -q "$token" "$main_qml"; then
         echo "FALLO: main.qml no contiene $token" >&2
         exit 1
     fi
 done
 
-for token in BulbRow; do
+if ! grep -q 'entry name="bulbNames"' "$ROOT/plasmoid/contents/config/main.xml"; then
+    echo "FALLO: config/main.xml no declara bulbNames" >&2
+    exit 1
+fi
+
+for token in BulbRow renameRequested Kirigami.PromptDialog PlasmaComponents3.TextField; do
     if ! grep -q "$token" "$ui_dir/FullRepresentation.qml"; then
         echo "FALLO: FullRepresentation.qml no contiene $token" >&2
         exit 1
     fi
 done
 
-for token in PlasmaComponents3.Switch PlasmaComponents3.Slider; do
+for token in PlasmaComponents3.Switch PlasmaComponents3.Slider edit-rename renameRequested customName; do
     if ! grep -q "$token" "$ui_dir/BulbRow.qml" 2>/dev/null; then
         echo "FALLO: BulbRow.qml no contiene $token" >&2
         exit 1
