@@ -43,14 +43,17 @@ Plasma (plasmashell)
     ├── CompactRepresentation: icono en la bandeja
     ├── FullRepresentation: lista, interruptores y deslizadores
     ├── ExecRunner: Plasma5Support.DataSource (engine "executable")
-    └── knownBulbs: JSON persistido en la configuración del applet
+    ├── knownBulbs: JSON persistido en la configuración del applet
+    └── nombres: ~/.config/neiwiz/bulb-names.json
              │
              │  comando puntual, termina al responder
              ▼
 ~/.local/share/neiwiz/venv/bin/python ~/.local/share/neiwiz/wizhelper.py
     ├── discover: UDP broadcast + consulta de estado
     ├── state: getPilot a las IPs conocidas
-    └── set: setPilot (on/off/brightness)
+    ├── set: setPilot (on/off/brightness)
+    ├── names: leer nombres personalizados
+    └── set-name: guardar o borrar un nombre
              │
              ▼
 Bombillas WiZ (UDP 38899)
@@ -103,18 +106,22 @@ búsqueda lanzan el helper; al terminar, no queda nada ejecutándose.
 
 ## Datos y persistencia
 
-La configuración del applet guarda `knownBulbs`, un JSON con `[{ip, mac}]`, y
-`bulbNames`, un JSON `{MAC: nombre}` con los nombres personalizados. Los nombres
-son locales: no se escriben en la bombilla ni en la app WiZ. Un nombre vacío
-elimina la entrada y vuelve al nombre automático. No se guarda el estado de
-encendido; se consulta al abrir. Si se pierde la configuración, la siguiente
-apertura vuelve a descubrir y los nombres vuelven a ser automáticos.
+La configuración del applet guarda `knownBulbs`, un JSON con `[{ip, mac}]`. Los
+nombres personalizados, `{MAC: nombre}`, se guardan en
+`~/.config/neiwiz/bulb-names.json`, fuera de la configuración del applet: Plasma
+puede recrear la instancia del widget al reiniciar y perder esa configuración.
+Los nombres son locales: no se escriben en la bombilla ni en la app WiZ. Un
+nombre vacío elimina la entrada y vuelve al nombre automático. No se guarda el
+estado de encendido; se consulta al abrir. Si se pierde la configuración del
+applet, la siguiente apertura vuelve a descubrir, pero los nombres se conservan.
 
 ## Instalación
 
 - `~/.local/share/neiwiz/venv`: entorno Python con `pywizlight`.
 - `~/.local/share/neiwiz/wizhelper.py`: helper.
 - `~/.local/share/plasma/plasmoids/org.neikon.neiwiz`: plasmoid.
+- `~/.config/neiwiz/bulb-names.json`: nombres personalizados, creado al
+  renombrar.
 - `install.sh` es idempotente y no usa `sudo`.
 - `uninstall.sh` elimina el plasmoid y el helper; conserva la configuración
   del applet.

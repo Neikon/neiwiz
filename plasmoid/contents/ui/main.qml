@@ -105,9 +105,14 @@ PlasmoidItem {
     }
 
     function loadCustomNames() {
-        let names = {};
-        try {
-            const parsed = JSON.parse(Plasmoid.configuration.bulbNames || "{}");
+        execRunner.run(helperCommandLine("names"), function(stdout, stderr, exitCode) {
+            const payload = parsePayload(stdout, stderr, exitCode);
+            if (!payload) {
+                return;
+            }
+
+            let names = {};
+            const parsed = payload.names;
             if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
                 for (const key in parsed) {
                     if (typeof parsed[key] !== "string") {
@@ -120,10 +125,9 @@ PlasmoidItem {
                     }
                 }
             }
-        } catch (error) {
-            lastError = "La lista guardada de nombres no es válida.";
-        }
-        customNames = names;
+            customNames = names;
+            updateModelNames();
+        });
     }
 
     function updateModelNames() {
@@ -144,6 +148,7 @@ PlasmoidItem {
             return;
         }
 
+        const previous = customNames;
         const next = {};
         for (const existing in customNames) {
             next[existing] = customNames[existing];
@@ -156,8 +161,20 @@ PlasmoidItem {
         }
 
         customNames = next;
-        Plasmoid.configuration.bulbNames = JSON.stringify(next);
         updateModelNames();
+
+        const command = helperCommandLine(
+            "set-name",
+            "--mac " + shellQuote(key) + " --name " + shellQuote(trimmed)
+        );
+        execRunner.run(command, function(stdout, stderr, exitCode) {
+            const payload = parsePayload(stdout, stderr, exitCode);
+            if (!payload) {
+                customNames = previous;
+                updateModelNames();
+                lastError = "No se pudo guardar el nombre.";
+            }
+        });
     }
 
     function clampBrightness(value) {

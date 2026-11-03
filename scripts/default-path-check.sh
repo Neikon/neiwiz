@@ -31,8 +31,8 @@ import json
 import os
 import sys
 
-with open(os.environ["NEIWIZ_TEST_MARKER"], "w", encoding="utf-8") as handle:
-    handle.write(" ".join(sys.argv[1:]))
+with open(os.environ["NEIWIZ_TEST_MARKER"], "a", encoding="utf-8") as handle:
+    handle.write(" ".join(sys.argv[1:]) + "\n")
 
 print(json.dumps({"ok": True, "bulbs": []}))
 PY
@@ -60,10 +60,10 @@ if [[ ! -f "$MARKER" ]]; then
     exit 1
 fi
 
-args="$(cat "$MARKER")"
-if [[ "$args" != *discover* ]]; then
-    echo "FALLO: el helper se ejecutó con argumentos inesperados: $args" >&2
+if ! grep -qx 'discover' "$MARKER"; then
+    echo "FALLO: el helper no se ejecutó con discover; llamadas:" >&2
+    cat "$MARKER" >&2
     exit 1
 fi
 
-echo "OK: el helper por defecto se ejecuta ($args)"
+echo "OK: el helper por defecto se ejecuta (discover)"

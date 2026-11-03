@@ -49,8 +49,9 @@ kpackagetool6 --type Plasma/Applet --list | grep org.neikon.neiwiz
 - El deslizador regula la intensidad. El valor se envía al soltar, no mientras
   se arrastra.
 - El botón de lápiz cambia el nombre de la bombilla. El nombre se guarda solo en
-  NeiWiz, asociado a su MAC, y no se escribe en la bombilla ni en la app WiZ.
-  Déjalo vacío para volver al nombre automático «Bombilla XXXX».
+  NeiWiz, asociado a su MAC y en `~/.config/neiwiz/bulb-names.json`; no se
+  escribe en la bombilla ni en la app WiZ. Déjalo vacío para volver al nombre
+  automático «Bombilla XXXX».
 - **Actualizar estado** vuelve a consultar todas las bombillas.
 - **Buscar bombillas** fuerza un descubrimiento nuevo. Las bombillas conocidas
   que no respondan en ese momento se conservan como «Sin conexión»; no se
@@ -73,7 +74,7 @@ Plasma (plasmashell)
     ├── Panel: lista, interruptores y deslizadores
     ├── ExecRunner: Plasma5Support.DataSource (engine "executable")
     ├── knownBulbs: [{ip, mac}] persistido en la configuración del applet
-    └── bulbNames: {MAC: nombre} persistido en la configuración del applet
+    └── nombres: {MAC: nombre} en ~/.config/neiwiz/bulb-names.json
              │
              │  comando puntual, termina al responder
              ▼
@@ -92,9 +93,10 @@ inesperada termina con código 1. El QML detecta el código 127 para mostrar la
 ayuda de instalación cuando falta el entorno Python.
 
 No se guarda el estado de encendido: solo la lista de bombillas conocidas
-(`knownBulbs`) y los nombres personalizados (`bulbNames`, con la MAC como
-clave). Si se pierde la configuración del applet, la siguiente apertura vuelve
-a descubrir y los nombres vuelven a ser automáticos.
+(`knownBulbs`, en la configuración del applet) y los nombres personalizados
+(`~/.config/neiwiz/bulb-names.json`, con la MAC como clave). Los nombres viven
+fuera de la configuración del applet para sobrevivir a los reinicios de Plasma,
+que pueden recrear la instancia del widget.
 
 ## Solución de problemas
 
@@ -184,9 +186,10 @@ Archivos principales:
 ```
 
 Elimina el plasmoid y `~/.local/share/neiwiz`, pero conserva la configuración
-del applet. Si quieres borrar también las bombillas y los nombres recordados,
-elimina el widget de la bandeja y su grupo en
-`~/.config/plasma-org.kde.plasma.desktop-appletsrc`.
+del applet y los nombres en `~/.config/neiwiz/bulb-names.json`. Si quieres
+borrar también las bombillas recordadas, elimina el widget de la bandeja y su
+grupo en `~/.config/plasma-org.kde.plasma.desktop-appletsrc`; para borrar los
+nombres, elimina el archivo `~/.config/neiwiz/bulb-names.json`.
 
 ## Licencia
 

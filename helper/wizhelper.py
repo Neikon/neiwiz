@@ -11,8 +11,10 @@ import argparse
 import asyncio
 import ipaddress
 import json
+import os
 import re
 import subprocess
+from pathlib import Path
 from typing import Any
 
 import pywizlight
@@ -50,6 +52,64 @@ def safe_mac(value: object) -> str | None:
     if not MAC_RE.fullmatch(compact):
         return None
     return compact.lower()
+
+
+NAMES_FILE = "bulb-names.json"
+
+
+def names_path() -> Path:
+    """Return the stable per-user file for custom bulb names."""
+    config_home = os.environ.get("XDG_CONFIG_HOME")
+    base = Path(config_home) if config_home else Path.home() / ".config"
+    return base / "neiwiz" / NAMES_FILE
+
+
+def load_names(path: Path | None = None) -> dict[str, str]:
+    """Read custom names, ignoring missing, corrupt or invalid entries."""
+    source = names_path() if path is None else path
+    try:
+        data = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+
+    names: dict[str, str] = {}
+    for key, value in data.items():
+        mac = safe_mac(key)
+        if mac is None or not isinstance(value, str):
+            continue
+        name = value.strip()
+        if name:
+            names[mac] = name
+    return names
+
+
+def save_names(names: dict[str, str], path: Path | None = None) -> None:
+    """Write names atomically so a crash cannot truncate the file."""
+    target = names_path() if path is None else path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(target.name + ".tmp")
+    temporary.write_text(
+        json.dumps(names, ensure_ascii=False, sort_keys=True), encoding="utf-8"
+    )
+    temporary.replace(target)
+
+
+def set_name(mac: str, name: str, path: Path | None = None) -> dict[str, Any]:
+    """Save a name, or delete it when the name is empty."""
+    clean = safe_mac(mac)
+    if clean is None:
+        return {"ok": False, "error": "MAC no válida"}
+
+    names = load_names(path)
+    trimmed = str(name or "").strip()
+    if trimmed:
+        names[clean] = trimmed
+    else:
+        names.pop(clean, None)
+    save_names(names, path)
+    return {"ok": True, "names": names}
 
 
 def percent_to_raw(percent: int) -> int:
@@ -240,6 +300,11 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
 
     commands.add_parser("discover", help="buscar bombillas WiZ en la red")
+    commands.add_parser("names", help="leer los nombres personalizados")
+
+    name_parser = commands.add_parser("set-name", help="guardar o borrar un nombre")
+    name_parser.add_argument("--mac", required=True)
+    name_parser.add_argument("--name", default="")
 
     state_parser = commands.add_parser("state", help="consultar bombillas conocidas")
     state_parser.add_argument("--ip", action="append", required=True, dest="ips")
@@ -256,6 +321,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "discover":
             return _emit({"ok": True, "bulbs": asyncio.run(discover_bulbs())})
+
+        if args.command == "names":
+            return _emit({"ok": True, "names": load_names()})
+
+        if args.command == "set-name":
+            return _emit(set_name(args.mac, args.name))
 
         if args.command == "state":
             normalized = [safe_ip(ip) for ip in args.ips]
