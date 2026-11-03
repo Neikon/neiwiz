@@ -31,3 +31,4 @@ for bulb in bulbs:
 '
 
 bash "$ROOT/scripts/smoke-plasmoid.sh"
+bash "$ROOT/scripts/default-path-check.sh"

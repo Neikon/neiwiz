@@ -37,9 +37,21 @@ PlasmoidItem {
             ? root.onCount + (root.onCount === 1 ? " encendida" : " encendidas")
             : "Todas apagadas")
 
+    function toLocalPath(value) {
+        const text = String(value || "");
+        if (text.indexOf("file://") !== 0) {
+            return text;
+        }
+        try {
+            return decodeURIComponent(text.substring(7));
+        } catch (error) {
+            return text.substring(7);
+        }
+    }
+
     function expandPath(value) {
-        const home = StandardPaths.writableLocation(StandardPaths.HomeLocation);
-        const path = String(value || "");
+        const path = toLocalPath(value);
+        const home = toLocalPath(StandardPaths.writableLocation(StandardPaths.HomeLocation));
         if (path === "~") {
             return home;
         }

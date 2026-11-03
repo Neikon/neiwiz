@@ -151,6 +151,9 @@ bash scripts/check-plasmoid.sh
 # Carga real del plasmoid en una ventana
 bash scripts/smoke-plasmoid.sh
 
+# Comprueba la ruta por defecto del helper (configuración limpia)
+bash scripts/default-path-check.sh
+
 # Instalación + descubrimiento real + smoke test
 bash scripts/integration-check.sh
 ```
