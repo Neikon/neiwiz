@@ -47,22 +47,22 @@ QT_LOGGING_RULES="qml.debug=true" \
 plasmawindowed org.neikon.neiwiz >"$LOG" 2>&1 &
 PID=$!
 
+found=0
 for _ in $(seq 1 40); do
-    if [[ -f "$MARKER" ]]; then
+    if [[ -f "$MARKER" ]] && grep -qx 'discover' "$MARKER"; then
+        found=1
         break
     fi
     sleep 0.5
 done
 
-if [[ ! -f "$MARKER" ]]; then
-    echo "FALLO: el helper por defecto no se ejecutó" >&2
-    cat "$LOG" >&2
-    exit 1
-fi
-
-if ! grep -qx 'discover' "$MARKER"; then
+if [[ "$found" -ne 1 ]]; then
     echo "FALLO: el helper no se ejecutó con discover; llamadas:" >&2
-    cat "$MARKER" >&2
+    if [[ -f "$MARKER" ]]; then
+        cat "$MARKER" >&2
+    else
+        cat "$LOG" >&2
+    fi
     exit 1
 fi
 
