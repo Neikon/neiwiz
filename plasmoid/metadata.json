@@ -1,0 +1,17 @@
+{
+  "KPackageStructure": "Plasma/Applet",
+  "KPlugin": {
+    "Authors": [{ "Name": "neikon" }],
+    "Category": "Hardware",
+    "Description": "Controla tus bombillas WiZ desde la bandeja de Plasma",
+    "EnabledByDefault": true,
+    "Icon": "flashlight-on-symbolic",
+    "Id": "org.neikon.neiwiz",
+    "License": "MIT",
+    "Name": "NeiWiz",
+    "Version": "0.1.0"
+  },
+  "X-Plasma-API-Minimum-Version": "6.0",
+  "X-Plasma-NotificationArea": "true",
+  "X-Plasma-NotificationAreaCategory": "Hardware"
+}
