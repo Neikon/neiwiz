@@ -4,10 +4,32 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APPLET_ID="org.neikon.neiwiz"
 
-main_qml="$ROOT/plasmoid/contents/ui/main.qml"
+ui_dir="$ROOT/plasmoid/contents/ui"
+main_qml="$ui_dir/main.qml"
 for token in ExecRunner knownBulbs refreshState; do
     if ! grep -q "$token" "$main_qml"; then
         echo "FALLO: main.qml no contiene $token" >&2
+        exit 1
+    fi
+done
+
+for token in BulbRow; do
+    if ! grep -q "$token" "$ui_dir/FullRepresentation.qml"; then
+        echo "FALLO: FullRepresentation.qml no contiene $token" >&2
+        exit 1
+    fi
+done
+
+for token in PlasmaComponents3.Switch PlasmaComponents3.Slider; do
+    if ! grep -q "$token" "$ui_dir/BulbRow.qml" 2>/dev/null; then
+        echo "FALLO: BulbRow.qml no contiene $token" >&2
+        exit 1
+    fi
+done
+
+for token in "No se han encontrado" "Falta el motor" "Sin conexión"; do
+    if ! grep -Rq "$token" "$ui_dir"; then
+        echo "FALLO: no aparece el estado '$token' en la interfaz" >&2
         exit 1
     fi
 done

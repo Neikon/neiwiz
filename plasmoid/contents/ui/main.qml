@@ -25,6 +25,7 @@ PlasmoidItem {
     property bool autoDiscoverTried: false
     property int onCount: 0
     readonly property bool anyOn: onCount > 0
+    property bool allOffline: false
     property string lastError: ""
 
     Plasmoid.icon: root.anyOn ? "flashlight-on-symbolic" : "flashlight-off-symbolic"
@@ -131,22 +132,18 @@ PlasmoidItem {
 
     function recompute() {
         let count = 0;
+        let onlineCount = 0;
         for (let i = 0; i < bulbsModel.count; ++i) {
             const item = bulbsModel.get(i);
-            if (item.online && item.on) {
-                count += 1;
+            if (item.online) {
+                onlineCount += 1;
+                if (item.on) {
+                    count += 1;
+                }
             }
         }
         onCount = count;
-    }
-
-    function allOffline() {
-        for (let i = 0; i < bulbsModel.count; ++i) {
-            if (bulbsModel.get(i).online) {
-                return false;
-            }
-        }
-        return bulbsModel.count > 0;
+        allOffline = bulbsModel.count > 0 && onlineCount === 0;
     }
 
     function parsePayload(stdout, stderr, exitCode) {
@@ -230,7 +227,7 @@ PlasmoidItem {
                 return;
             }
             applyStates(payload.bulbs || []);
-            if (allOffline() && !autoDiscoverTried) {
+            if (allOffline && !autoDiscoverTried) {
                 autoDiscoverTried = true;
                 discover();
             }
@@ -375,7 +372,26 @@ PlasmoidItem {
     }
 
     fullRepresentation: FullRepresentation {
-        Layout.minimumWidth: Kirigami.Units.gridUnit * 20
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 10
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 22
+        Layout.minimumHeight: Kirigami.Units.gridUnit * 12
+
+        bulbsModel: root.bulbsModel
+        busy: root.busy
+        lastError: root.lastError
+        anyOn: root.anyOn
+        onCount: root.onCount
+        allOffline: root.allOffline
+
+        onRefreshRequested: {
+            root.autoDiscoverTried = false;
+            root.refreshState();
+        }
+        onDiscoverRequested: root.discover()
+        onPowerToggled: function(index, on) {
+            root.togglePower(index, on);
+        }
+        onBrightnessChanged: function(index, value) {
+            root.setBrightness(index, value);
+        }
     }
 }
