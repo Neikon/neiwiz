@@ -337,6 +337,26 @@ PlasmoidItem {
             }
 
             const bulbs = Array.isArray(payload.bulbs) ? payload.bulbs : [];
+            const previous = [];
+            for (let i = 0; i < bulbsModel.count; ++i) {
+                const item = bulbsModel.get(i);
+                previous.push({ ip: item.ip, mac: item.mac || "" });
+            }
+
+            const discoveredMacs = {};
+            const discoveredIps = {};
+            for (let i = 0; i < bulbs.length; ++i) {
+                const bulb = bulbs[i];
+                if (!bulb || typeof bulb.ip !== "string") {
+                    continue;
+                }
+                const clean = normalizeMac(bulb.mac);
+                if (clean.length > 0) {
+                    discoveredMacs[clean] = true;
+                }
+                discoveredIps[bulb.ip] = true;
+            }
+
             bulbsModel.clear();
             for (let i = 0; i < bulbs.length; ++i) {
                 const bulb = bulbs[i];
@@ -354,6 +374,25 @@ PlasmoidItem {
                     busy: false,
                 });
             }
+
+            for (let i = 0; i < previous.length; ++i) {
+                const entry = previous[i];
+                const clean = normalizeMac(entry.mac);
+                if ((clean.length > 0 && discoveredMacs[clean]) || discoveredIps[entry.ip]) {
+                    continue;
+                }
+                bulbsModel.append({
+                    ip: entry.ip,
+                    mac: entry.mac,
+                    name: bulbName(entry.mac, entry.ip),
+                    customName: customNameFor(entry.mac),
+                    online: false,
+                    on: false,
+                    brightness: 100,
+                    busy: false,
+                });
+            }
+
             saveKnownBulbs();
             recompute();
         });

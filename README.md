@@ -52,7 +52,9 @@ kpackagetool6 --type Plasma/Applet --list | grep org.neikon.neiwiz
   NeiWiz, asociado a su MAC, y no se escribe en la bombilla ni en la app WiZ.
   Déjalo vacío para volver al nombre automático «Bombilla XXXX».
 - **Actualizar estado** vuelve a consultar todas las bombillas.
-- **Buscar bombillas** fuerza un descubrimiento nuevo.
+- **Buscar bombillas** fuerza un descubrimiento nuevo. Las bombillas conocidas
+  que no respondan en ese momento se conservan como «Sin conexión»; no se
+  eliminan de la lista.
 - Si una bombilla no responde, se muestra atenuada como «Sin conexión» y no
   bloquea al resto.
 - Si todas las IPs conocidas fallan, se intenta un descubrimiento automático
@@ -158,6 +160,9 @@ bash scripts/smoke-plasmoid.sh
 
 # Comprueba la ruta por defecto del helper (configuración limpia)
 bash scripts/default-path-check.sh
+
+# Comprueba que un descubrimiento conserva las bombillas conocidas
+bash scripts/discover-merge-check.sh
 
 # Instalación + descubrimiento real + smoke test
 bash scripts/integration-check.sh

@@ -125,8 +125,9 @@ apertura vuelve a descubrir y los nombres vuelven a ser automáticos.
   gestionado por `uv`.
 - **Broadcast global bloqueado**: el helper reintenta con el broadcast de la
   subred local calculado desde `ip addr`.
-- **IP cambiada por DHCP**: redescubrimiento automático si todas fallan y
-  botón manual de búsqueda.
+- **IP cambiada por DHCP**: redescubrimiento automático si todas fallan,
+  botón manual de búsqueda y fusión por MAC que conserva las bombillas
+  conocidas que no respondan en un descubrimiento concreto.
 - **Bombilla desconectada**: timeout de 2 s por bombilla; el resto sigue
   funcionando.
 - **Helper ausente**: se detecta el código de salida 127 y se muestra una
