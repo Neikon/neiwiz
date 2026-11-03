@@ -6,15 +6,20 @@ APPLET_ID="org.neikon.neiwiz"
 
 ui_dir="$ROOT/plasmoid/contents/ui"
 main_qml="$ui_dir/main.qml"
-for token in ExecRunner knownBulbs refreshState bulbNames renameBulb; do
+for token in ExecRunner knownBulbs refreshState renameBulb set-name; do
     if ! grep -q "$token" "$main_qml"; then
         echo "FALLO: main.qml no contiene $token" >&2
         exit 1
     fi
 done
 
-if ! grep -q 'entry name="bulbNames"' "$ROOT/plasmoid/contents/config/main.xml"; then
-    echo "FALLO: config/main.xml no declara bulbNames" >&2
+if grep -q 'configuration.bulbNames' "$main_qml"; then
+    echo "FALLO: los nombres no deben guardarse en la configuración del applet" >&2
+    exit 1
+fi
+
+if grep -q 'entry name="bulbNames"' "$ROOT/plasmoid/contents/config/main.xml"; then
+    echo "FALLO: config/main.xml todavía declara bulbNames" >&2
     exit 1
 fi
 

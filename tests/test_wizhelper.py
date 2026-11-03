@@ -224,3 +224,85 @@ def test_main_discover_with_no_bulbs(helper, monkeypatch, capsys):
     payload = json.loads(capsys.readouterr().out)
     assert code == 0
     assert payload == {"ok": True, "bulbs": []}
+
+
+def test_names_path_uses_xdg_config_home(helper, monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    assert helper.names_path() == tmp_path / "neiwiz" / "bulb-names.json"
+
+
+def test_names_path_falls_back_to_home(helper, monkeypatch, tmp_path):
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert helper.names_path() == tmp_path / ".config" / "neiwiz" / "bulb-names.json"
+
+
+def test_save_and_load_names_roundtrip(helper, tmp_path):
+    path = tmp_path / "names.json"
+    helper.save_names({"AABBCCDDEEFF": "Despacho"}, path)
+    assert helper.load_names(path) == {"aabbccddeeff": "Despacho"}
+
+
+@pytest.mark.parametrize("content", ["{not json", '["not", "an", "object"]'])
+def test_load_names_ignores_invalid_file(helper, tmp_path, content):
+    path = tmp_path / "names.json"
+    path.write_text(content, encoding="utf-8")
+    assert helper.load_names(path) == {}
+
+
+def test_load_names_filters_invalid_entries(helper, tmp_path):
+    path = tmp_path / "names.json"
+    path.write_text(
+        json.dumps(
+            {
+                "AA:BB:CC:DD:EE:FF": "Despacho",
+                "not-a-mac": "Cocina",
+                "AABBCCDDEEFF": "   ",
+                "112233445566": 42,
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert helper.load_names(path) == {"aabbccddeeff": "Despacho"}
+
+
+def test_set_name_saves_and_deletes(helper, tmp_path):
+    path = tmp_path / "names.json"
+
+    result = helper.set_name("AA:BB:CC:DD:EE:FF", "  Despacho  ", path)
+    assert result["ok"] is True
+    assert helper.load_names(path) == {"aabbccddeeff": "Despacho"}
+
+    result = helper.set_name("aabbccddeeff", "   ", path)
+    assert result["ok"] is True
+    assert helper.load_names(path) == {}
+
+
+def test_set_name_rejects_invalid_mac(helper, tmp_path):
+    result = helper.set_name("not-a-mac", "Despacho", tmp_path / "names.json")
+    assert result["ok"] is False
+    assert "MAC" in result["error"]
+
+
+def test_main_names_outputs_json(helper, monkeypatch, capsys, tmp_path):
+    path = tmp_path / "names.json"
+    helper.save_names({"aabbccddeeff": "Despacho"}, path)
+    monkeypatch.setattr(helper, "names_path", lambda: path)
+
+    code = helper.main(["names"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload == {"ok": True, "names": {"aabbccddeeff": "Despacho"}}
+
+
+def test_main_set_name_outputs_json(helper, monkeypatch, capsys, tmp_path):
+    path = tmp_path / "names.json"
+    monkeypatch.setattr(helper, "names_path", lambda: path)
+
+    code = helper.main(["set-name", "--mac", "AABBCCDDEEFF", "--name", "Despacho"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["ok"] is True
+    assert payload["names"] == {"aabbccddeeff": "Despacho"}

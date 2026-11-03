@@ -31,8 +31,8 @@ import json
 import os
 import sys
 
-with open(os.environ["NEIWIZ_TEST_MARKER"], "w", encoding="utf-8") as handle:
-    handle.write(" ".join(sys.argv[1:]))
+with open(os.environ["NEIWIZ_TEST_MARKER"], "a", encoding="utf-8") as handle:
+    handle.write(" ".join(sys.argv[1:]) + "\n")
 
 print(json.dumps({"ok": True, "bulbs": []}))
 PY
@@ -47,23 +47,23 @@ QT_LOGGING_RULES="qml.debug=true" \
 plasmawindowed org.neikon.neiwiz >"$LOG" 2>&1 &
 PID=$!
 
+found=0
 for _ in $(seq 1 40); do
-    if [[ -f "$MARKER" ]]; then
+    if [[ -f "$MARKER" ]] && grep -qx 'discover' "$MARKER"; then
+        found=1
         break
     fi
     sleep 0.5
 done
 
-if [[ ! -f "$MARKER" ]]; then
-    echo "FALLO: el helper por defecto no se ejecutó" >&2
-    cat "$LOG" >&2
+if [[ "$found" -ne 1 ]]; then
+    echo "FALLO: el helper no se ejecutó con discover; llamadas:" >&2
+    if [[ -f "$MARKER" ]]; then
+        cat "$MARKER" >&2
+    else
+        cat "$LOG" >&2
+    fi
     exit 1
 fi
 
-args="$(cat "$MARKER")"
-if [[ "$args" != *discover* ]]; then
-    echo "FALLO: el helper se ejecutó con argumentos inesperados: $args" >&2
-    exit 1
-fi
-
-echo "OK: el helper por defecto se ejecuta ($args)"
+echo "OK: el helper por defecto se ejecuta (discover)"

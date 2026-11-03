@@ -10,10 +10,6 @@
       <label>Known bulbs as a JSON array of objects with ip and mac</label>
       <default/>
     </entry>
-    <entry name="bulbNames" type="String">
-      <label>Custom bulb names as a JSON object keyed by normalized MAC</label>
-      <default/>
-    </entry>
     <entry name="helperCommand" type="String">
       <label>Python executable used to run the NeiWiz helper</label>
       <default>$HOME/.local/share/neiwiz/venv/bin/python</default>
