@@ -182,6 +182,30 @@ def test_main_state_outputs_json(helper, monkeypatch, capsys):
     assert payload["bulbs"][0]["brightness"] == 50
 
 
+def test_main_state_skips_invalid_saved_ips(helper, monkeypatch, capsys):
+    calls = []
+
+    async def fake_query_many(ips):
+        calls.append(ips)
+        return [{"ip": ips[0], "online": True, "on": False, "brightness": 100, "mac": None}]
+
+    monkeypatch.setattr(helper, "query_many", fake_query_many)
+    code = helper.main(["state", "--ip", "not-an-ip", "--ip", "192.168.1.10"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["ok"] is True
+    assert calls == [["192.168.1.10"]]
+
+
+def test_main_state_rejects_when_all_ips_are_invalid(helper, capsys):
+    code = helper.main(["state", "--ip", "not-an-ip"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error"]
+
+
 def test_main_set_brightness_maps_percent(helper, monkeypatch, capsys):
     calls = []
 
@@ -315,13 +339,11 @@ def test_main_set_name_outputs_json(helper, monkeypatch, capsys, tmp_path):
     assert payload["names"] == {"aabbccddeeff": "Despacho"}
 
 
-def test_main_set_name_accepts_name_starting_with_dash(
-    helper, monkeypatch, capsys, tmp_path
-):
+def test_main_set_name_accepts_equals_form_with_dash(helper, monkeypatch, capsys, tmp_path):
     path = tmp_path / "names.json"
     monkeypatch.setattr(helper, "names_path", lambda: path)
 
-    code = helper.main(["set-name", "--mac", "AABBCCDDEEFF", "--name", "-luz"])
+    code = helper.main(["set-name", "--mac", "AABBCCDDEEFF", "--name=-luz"])
 
     payload = json.loads(capsys.readouterr().out)
     assert code == 0

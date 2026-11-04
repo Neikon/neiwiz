@@ -15,7 +15,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -126,26 +125,6 @@ def set_name(mac: str, name: str, path: Path | None = None) -> dict[str, Any]:
             names.pop(clean, None)
         save_names(names, target)
     return {"ok": True, "names": names}
-
-
-def _fix_name_option(argv: list[str]) -> list[str]:
-    """Turn `--name -luz` into `--name=-luz` so argparse accepts the value."""
-    fixed: list[str] = []
-    index = 0
-    while index < len(argv):
-        value = argv[index]
-        if (
-            value == "--name"
-            and index + 1 < len(argv)
-            and argv[index + 1].startswith("-")
-            and argv[index + 1] != "-"
-        ):
-            fixed.append(f"--name={argv[index + 1]}")
-            index += 2
-            continue
-        fixed.append(value)
-        index += 1
-    return fixed
 
 
 def percent_to_raw(percent: int) -> int:
@@ -351,8 +330,7 @@ def main(argv: list[str] | None = None) -> int:
     action.add_argument("--off", action="store_true")
     action.add_argument("--brightness", type=int)
 
-    raw = sys.argv[1:] if argv is None else argv
-    args = parser.parse_args(_fix_name_option(raw))
+    args = parser.parse_args(argv)
 
     try:
         if args.command == "discover":
@@ -365,10 +343,13 @@ def main(argv: list[str] | None = None) -> int:
             return _emit(set_name(args.mac, args.name))
 
         if args.command == "state":
-            normalized = [safe_ip(ip) for ip in args.ips]
-            if any(ip is None for ip in normalized):
+            ips: list[str] = []
+            for value in args.ips:
+                ip = safe_ip(value)
+                if ip is not None and ip not in ips:
+                    ips.append(ip)
+            if not ips:
                 return _emit({"ok": False, "error": "dirección IP no válida"})
-            ips = [ip for ip in normalized if ip is not None]
             return _emit({"ok": True, "bulbs": asyncio.run(query_many(ips))})
 
         ip = safe_ip(args.ip)

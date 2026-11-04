@@ -182,7 +182,7 @@ PlasmoidItem {
 
         const command = helperCommandLine(
             "set-name",
-            "--mac " + shellQuote(key) + " --name " + shellQuote(trimmed)
+            "--mac " + shellQuote(key) + " --name=" + shellQuote(trimmed)
         );
         execRunner.run(command, function(stdout, stderr, exitCode) {
             const previousError = lastError;

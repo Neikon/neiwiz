@@ -13,6 +13,11 @@ for token in ExecRunner knownBulbs refreshState renameBulb set-name; do
     fi
 done
 
+if ! grep -Fq -- '--name=' "$main_qml"; then
+    echo "FALLO: main.qml debe pasar el nombre con --name=<valor>" >&2
+    exit 1
+fi
+
 if grep -q 'configuration.bulbNames' "$main_qml"; then
     echo "FALLO: los nombres no deben guardarse en la configuración del applet" >&2
     exit 1
