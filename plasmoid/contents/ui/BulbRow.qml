@@ -21,6 +21,13 @@ Item {
     signal brightnessCommitted(int index, int value)
     signal renameRequested(string mac, string currentName)
 
+    function commitBrightness() {
+        const committed = Math.round(brightnessSlider.value);
+        if (committed !== root.brightness) {
+            root.brightnessCommitted(root.rowIndex, committed);
+        }
+    }
+
     width: ListView.view ? ListView.view.width : implicitWidth
     implicitHeight: content.implicitHeight + Kirigami.Units.smallSpacing * 2
     opacity: online ? 1 : 0.55
@@ -74,6 +81,8 @@ Item {
 
         PlasmaComponents3.Slider {
             id: brightnessSlider
+            objectName: "brightnessSlider"
+            Accessible.name: "Brillo de " + root.bulbName
 
             Layout.alignment: Qt.AlignVCenter
             Layout.minimumWidth: Kirigami.Units.gridUnit * 4
@@ -84,14 +93,8 @@ Item {
             stepSize: 1
             enabled: root.online && root.isOn && !root.bulbBusy
             opacity: enabled ? 1 : 0.4
-            onPressedChanged: {
-                if (!pressed) {
-                    const committed = Math.round(value);
-                    if (committed !== root.brightness) {
-                        root.brightnessCommitted(root.rowIndex, committed);
-                    }
-                }
-            }
+            onMoved: if (!brightnessSlider.pressed) commitBrightness()
+            onPressedChanged: if (!brightnessSlider.pressed) commitBrightness()
 
             Binding {
                 target: brightnessSlider
