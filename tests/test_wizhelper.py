@@ -92,22 +92,26 @@ def test_safe_mac_rejects_invalid(helper, value):
     assert helper.safe_mac(value) is None
 
 
-def test_local_broadcast_parses_ip_addr(helper, monkeypatch):
+def test_local_broadcasts_parses_all_unique_interfaces(helper, monkeypatch):
     output = (
         "2: eno1    inet 192.168.1.250/24 brd 192.168.1.255 scope global eno1\\"
-        "       valid_lft forever preferred_lft forever"
+        "       valid_lft forever preferred_lft forever\n"
+        "3: wlan0   inet 10.0.0.5/24 brd 10.0.0.255 scope global wlan0\\"
+        "       valid_lft forever preferred_lft forever\n"
+        "4: eno1    inet 192.168.1.250/24 brd 192.168.1.255 scope global eno1\\"
+        "       valid_lft forever preferred_lft forever\n"
     )
     completed = subprocess.CompletedProcess(args=[], returncode=0, stdout=output, stderr="")
     monkeypatch.setattr(helper.subprocess, "run", lambda *args, **kwargs: completed)
-    assert helper.local_broadcast() == "192.168.1.255"
+    assert helper.local_broadcasts() == ["192.168.1.255", "10.0.0.255"]
 
 
-def test_local_broadcast_returns_none_when_command_fails(helper, monkeypatch):
+def test_local_broadcasts_returns_empty_when_command_fails(helper, monkeypatch):
     def raise_error(*args, **kwargs):
         raise subprocess.CalledProcessError(1, "ip")
 
     monkeypatch.setattr(helper.subprocess, "run", raise_error)
-    assert helper.local_broadcast() is None
+    assert helper.local_broadcasts() == []
 
 
 def test_query_many_marks_timeouts_offline(helper, monkeypatch):
@@ -129,7 +133,7 @@ def test_discover_uses_global_then_local_broadcast(helper, monkeypatch):
 
     async def fake_find(wait_time, broadcast_address):
         addresses.append(broadcast_address)
-        if broadcast_address == "255.255.255.255":
+        if broadcast_address in ("255.255.255.255", "192.168.1.255"):
             return []
         return [fake_bulb]
 
@@ -146,11 +150,11 @@ def test_discover_uses_global_then_local_broadcast(helper, monkeypatch):
 
     monkeypatch.setattr(helper, "find_wizlights", fake_find)
     monkeypatch.setattr(helper, "query_many", fake_query_many)
-    monkeypatch.setattr(helper, "local_broadcast", lambda: "192.168.1.255")
+    monkeypatch.setattr(helper, "local_broadcasts", lambda: ["192.168.1.255", "10.0.0.255"])
 
     result = asyncio.run(helper.discover_bulbs())
 
-    assert addresses == ["255.255.255.255", "192.168.1.255"]
+    assert addresses == ["255.255.255.255", "192.168.1.255", "10.0.0.255"]
     assert len(result) == 1
     assert result[0]["ip"] == "192.168.1.10"
     assert result[0]["mac"] == "a8bb50a4f94d"

@@ -169,8 +169,8 @@ def parse_pilot_result(result: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
-def local_broadcast() -> str | None:
-    """Return the broadcast address of the first global IPv4 interface."""
+def local_broadcasts() -> list[str]:
+    """Return every unique broadcast address of global IPv4 interfaces."""
     try:
         completed = subprocess.run(
             ["ip", "-4", "-o", "addr", "show", "scope", "global"],
@@ -180,11 +180,9 @@ def local_broadcast() -> str | None:
             check=True,
         )
     except (OSError, subprocess.SubprocessError):
-        return None
+        return []
 
-    if completed.returncode != 0:
-        return None
-
+    broadcasts: list[str] = []
     for line in completed.stdout.splitlines():
         match = INET_RE.search(line)
         if not match:
@@ -194,8 +192,10 @@ def local_broadcast() -> str | None:
             interface = ipaddress.IPv4Interface(f"{address}/{prefix}")
         except ValueError:
             continue
-        return str(interface.network.broadcast_address)
-    return None
+        broadcast = str(interface.network.broadcast_address)
+        if broadcast not in broadcasts:
+            broadcasts.append(broadcast)
+    return broadcasts
 
 
 def _error_text(exc: BaseException) -> str:
@@ -270,19 +270,18 @@ async def _find_on(address: str) -> list[Any]:
         return []
 
 
-async def discover_bulbs(broadcast: str | None = None) -> list[dict[str, Any]]:
+async def discover_bulbs() -> list[dict[str, Any]]:
     """Broadcast for bulbs, then read their current state."""
-    addresses = [broadcast] if broadcast else [GLOBAL_BROADCAST]
+    addresses = [GLOBAL_BROADCAST]
+    for address in local_broadcasts():
+        if address not in addresses:
+            addresses.append(address)
+
     discovered: list[Any] = []
     for address in addresses:
         discovered = await _find_on(address)
         if discovered:
             break
-        if broadcast is not None or address != GLOBAL_BROADCAST:
-            break
-        local = local_broadcast()
-        if local and local != GLOBAL_BROADCAST:
-            addresses.append(local)
 
     by_ip: dict[str, Any] = {}
     for found in discovered:
