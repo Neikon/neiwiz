@@ -19,7 +19,7 @@ Item {
 
     signal powerToggled(int index, bool on)
     signal brightnessCommitted(int index, int value)
-    signal renameRequested(int index, string currentName)
+    signal renameRequested(string mac, string currentName)
 
     width: ListView.view ? ListView.view.width : implicitWidth
     implicitHeight: content.implicitHeight + Kirigami.Units.smallSpacing * 2
@@ -113,6 +113,7 @@ Item {
 
         PlasmaComponents3.ToolButton {
             id: renameButton
+            objectName: "renameButton"
 
             Layout.alignment: Qt.AlignVCenter
             icon.name: "edit-rename"
@@ -120,7 +121,7 @@ Item {
             display: PlasmaComponents3.AbstractButton.IconOnly
             enabled: root.mac.length > 0
             opacity: enabled ? 1 : 0.4
-            onClicked: root.renameRequested(root.rowIndex, root.customName)
+            onClicked: root.renameRequested(root.mac, root.customName)
 
             PlasmaComponents3.ToolTip {
                 text: "Cambiar nombre"

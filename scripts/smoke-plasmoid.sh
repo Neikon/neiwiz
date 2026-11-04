@@ -23,7 +23,7 @@ if grep -q 'entry name="bulbNames"' "$ROOT/plasmoid/contents/config/main.xml"; t
     exit 1
 fi
 
-for token in BulbRow renameRequested Kirigami.PromptDialog PlasmaComponents3.TextField; do
+for token in BulbRow renameRequested renameMac Kirigami.PromptDialog PlasmaComponents3.TextField; do
     if ! grep -q "$token" "$ui_dir/FullRepresentation.qml"; then
         echo "FALLO: FullRepresentation.qml no contiene $token" >&2
         exit 1

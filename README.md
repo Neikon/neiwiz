@@ -162,6 +162,9 @@ python3 -m venv .venv
 # Validación estática del paquete
 bash scripts/check-plasmoid.sh
 
+# Pruebas de comportamiento QML (requiere python3-pyside6)
+bash scripts/qml-test.sh
+
 # Carga real del plasmoid en una ventana
 bash scripts/smoke-plasmoid.sh
 

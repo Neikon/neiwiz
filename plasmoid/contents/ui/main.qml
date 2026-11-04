@@ -151,12 +151,8 @@ PlasmoidItem {
         }
     }
 
-    function renameBulb(index, name) {
-        if (index < 0 || index >= bulbsModel.count) {
-            return;
-        }
-        const item = bulbsModel.get(index);
-        const key = normalizeMac(item.mac);
+    function renameBulb(mac, name) {
+        const key = normalizeMac(mac);
         if (key.length === 0) {
             return;
         }
@@ -573,8 +569,8 @@ PlasmoidItem {
         onBrightnessChanged: function(index, value) {
             root.setBrightness(index, value);
         }
-        onRenameRequested: function(index, name) {
-            root.renameBulb(index, name);
+        onRenameRequested: function(mac, name) {
+            root.renameBulb(mac, name);
         }
     }
 }

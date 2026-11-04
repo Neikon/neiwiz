@@ -14,7 +14,7 @@ PlasmaExtras.Representation {
     property bool anyOn: false
     property int onCount: 0
     property bool allOffline: false
-    property int renameIndex: -1
+    property string renameMac: ""
 
     readonly property bool helperMissing: lastError.indexOf("Falta el motor") >= 0
 
@@ -22,10 +22,10 @@ PlasmaExtras.Representation {
     signal discoverRequested()
     signal powerToggled(int index, bool on)
     signal brightnessChanged(int index, int value)
-    signal renameRequested(int index, string name)
+    signal renameRequested(string mac, string name)
 
-    function openRenameDialog(index, currentName) {
-        renameIndex = index;
+    function openRenameDialog(mac, currentName) {
+        renameMac = mac;
         renameField.text = String(currentName || "");
         renameDialog.open();
     }
@@ -235,6 +235,7 @@ PlasmaExtras.Representation {
 
     Kirigami.PromptDialog {
         id: renameDialog
+        objectName: "renameDialog"
 
         title: "Cambiar nombre"
         preferredWidth: Kirigami.Units.gridUnit * 18
@@ -258,11 +259,12 @@ PlasmaExtras.Representation {
             renameField.selectAll();
         }
         onAccepted: {
-            root.renameRequested(root.renameIndex, renameField.text);
+            root.renameRequested(root.renameMac, renameField.text);
         }
 
         PlasmaComponents3.TextField {
             id: renameField
+            objectName: "renameField"
 
             Layout.fillWidth: true
             placeholderText: "Nombre personalizado"
