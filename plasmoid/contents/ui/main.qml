@@ -6,6 +6,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 
+import "NeiWizModel.js" as NeiWizModel
+
 PlasmoidItem {
     id: root
 
@@ -207,14 +209,6 @@ PlasmoidItem {
         });
     }
 
-    function clampBrightness(value) {
-        const number = Math.round(Number(value));
-        if (!isFinite(number)) {
-            return 100;
-        }
-        return Math.max(1, Math.min(100, number));
-    }
-
     function loadKnownBulbs() {
         let entries = [];
         try {
@@ -326,15 +320,19 @@ PlasmoidItem {
             if (index < 0) {
                 continue;
             }
-            bulbsModel.setProperty(index, "online", state.online === true);
-            bulbsModel.setProperty(index, "on", state.on === true);
-            bulbsModel.setProperty(index, "brightness", clampBrightness(state.brightness));
-            if (typeof state.mac === "string" && state.mac.length > 0) {
-                bulbsModel.setProperty(index, "mac", state.mac);
-                bulbsModel.setProperty(index, "customName", customNameFor(state.mac));
-                bulbsModel.setProperty(index, "name", bulbName(state.mac, state.ip));
+            const item = bulbsModel.get(index);
+            const update = NeiWizModel.applyState(item, state);
+            if (!update) {
+                continue;
             }
-            bulbsModel.setProperty(index, "busy", false);
+            bulbsModel.setProperty(index, "online", update.online);
+            bulbsModel.setProperty(index, "on", update.on);
+            bulbsModel.setProperty(index, "brightness", update.brightness);
+            if (update.mac.length > 0) {
+                bulbsModel.setProperty(index, "mac", update.mac);
+                bulbsModel.setProperty(index, "customName", customNameFor(update.mac));
+                bulbsModel.setProperty(index, "name", bulbName(update.mac, state.ip));
+            }
         }
         recompute();
     }
@@ -417,7 +415,7 @@ PlasmoidItem {
                     customName: customNameFor(bulb.mac),
                     online: bulb.online === true,
                     on: bulb.on === true,
-                    brightness: clampBrightness(bulb.brightness),
+                    brightness: NeiWizModel.clampBrightness(bulb.brightness),
                     busy: false,
                 });
             }
@@ -453,6 +451,7 @@ PlasmoidItem {
         if (item.busy) {
             return;
         }
+        lastError = "";
 
         const ip = item.ip;
         const previous = item.on;
@@ -486,10 +485,11 @@ PlasmoidItem {
         if (item.busy || !item.online || !item.on) {
             return;
         }
+        lastError = "";
 
         const ip = item.ip;
         const previous = item.brightness;
-        const value = clampBrightness(pct);
+        const value = NeiWizModel.clampBrightness(pct);
         bulbsModel.setProperty(index, "brightness", value);
         bulbsModel.setProperty(index, "busy", true);
 
