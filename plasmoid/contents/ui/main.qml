@@ -11,13 +11,6 @@ import "NeiWizModel.js" as NeiWizModel
 PlasmoidItem {
     id: root
 
-    readonly property bool inPanel: [
-        PlasmaCore.Types.TopEdge,
-        PlasmaCore.Types.RightEdge,
-        PlasmaCore.Types.BottomEdge,
-        PlasmaCore.Types.LeftEdge,
-    ].includes(Plasmoid.location)
-
     readonly property string dataHome:
         toLocalPath(StandardPaths.writableLocation(StandardPaths.GenericDataLocation))
     readonly property string defaultHelperCommand:

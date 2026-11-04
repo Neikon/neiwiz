@@ -117,8 +117,8 @@ que pueden recrear la instancia del widget.
   "${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py" discover
 ```
 
-El helper intenta el broadcast global y, si no funciona, el broadcast de la
-subred local calculado a partir de las interfaces.
+El helper prueba el broadcast global y, si no responde, el de cada interfaz
+local hasta encontrar bombillas.
 
 ### «Falta el motor de NeiWiz»
 
@@ -136,6 +136,12 @@ detecta el fallo y recrea el entorno con Python 3.13 usando `uv`. Si no tienes
 
 NeiWiz guarda la MAC y redescubre automáticamente si todas las IPs conocidas
 fallan. También puedes pulsar **Buscar bombillas** en el panel.
+
+### El archivo de nombres está dañado
+
+Si `~/.config/neiwiz/bulb-names.json` no contiene un objeto JSON válido, cambiar
+el nombre falla sin tocar el archivo. Haz una copia de seguridad, bórralo o
+repáralo y vuelve a intentarlo.
 
 ### Los cambios del móvil no aparecen al instante
 

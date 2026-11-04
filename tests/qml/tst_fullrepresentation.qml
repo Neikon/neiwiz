@@ -55,4 +55,15 @@ TestCase {
         compare(spy.signalArguments[0][0], "112233445566")
         compare(spy.signalArguments[0][1], "Cocina")
     }
+
+    function test_status_shows_updating_while_busy() {
+        let panel = createTemporaryObject(fullComponent, testCase)
+        let label = findChild(panel, "statusLabel")
+        verify(label)
+        panel.busy = true
+        panel.allOffline = true
+        compare(label.text, "Actualizando…")
+        panel.busy = false
+        compare(label.text, "Sin conexión")
+    }
 }

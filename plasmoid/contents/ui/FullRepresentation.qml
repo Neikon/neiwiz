@@ -30,8 +30,6 @@ PlasmaExtras.Representation {
         renameDialog.open();
     }
 
-    Layout.minimumWidth: Kirigami.Units.gridUnit * 22
-    Layout.minimumHeight: Kirigami.Units.gridUnit * 12
     collapseMarginsHint: true
 
     header: PlasmaExtras.PlasmoidHeading {
@@ -50,8 +48,12 @@ PlasmaExtras.Representation {
                 }
 
                 PlasmaComponents3.Label {
+                    objectName: "statusLabel"
                     Layout.fillWidth: true
                     text: {
+                        if (root.busy) {
+                            return "Actualizando…";
+                        }
                         if (root.bulbsModel.count === 0) {
                             return "Sin bombillas";
                         }
