@@ -7,6 +7,7 @@ QtObject {
 
     property int nextId: 0
     property var pending: ({})
+    property int timeoutMs: 30000
 
     function run(command, callback) {
         const id = ++nextId;
@@ -48,6 +49,7 @@ QtObject {
         });
 
         source.connectedSources = [sourceName];
+        timer.interval = runner.timeoutMs;
         timer.start();
         return sourceName;
     }
@@ -79,7 +81,6 @@ QtObject {
     property Component timerComponent: Component {
         Timer {
             repeat: false
-            interval: 8000
         }
     }
 }
