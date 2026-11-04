@@ -1,210 +1,212 @@
 # NeiWiz
 
-Widget de Plasma 6 para descubrir y controlar las bombillas WiZ de la red
-local desde la bandeja del sistema: encender, apagar y regular la intensidad.
+A Plasma 6 widget for discovering and controlling WiZ bulbs on your local
+network from the system tray: turn them on and off and adjust their brightness.
 
-No usa daemon, systemd, autostart ni ningún puerto de escucha. El widget lanza
-un helper Python de vida corta cuando lo necesita y, al terminar, no queda
-ningún proceso residente.
+It uses no daemon, systemd service, autostart entry, or listening port. The
+widget launches a short-lived Python helper when it needs one, and no resident
+process is left behind afterwards.
 
-## Requisitos
+## Requirements
 
-- Plasma 6 (probado en Plasma 6.7.5 sobre Bazzite 44).
-- Python 3.11 o superior. Probado con Python 3.14.
-- `uv` recomendado; si no está, el instalador usa `python3 -m venv`.
-- Bombillas WiZ y el equipo en la misma red local, con UDP 38899 permitido.
-- No hace falta `sudo` ni ningún permiso de administrador.
+- Plasma 6 (tested on Plasma 6.7.5 on Bazzite 45).
+- Python 3.11 or newer. Tested with Python 3.14 and 3.15.
+- `uv` is recommended; without it, the installer uses `python3 -m venv`.
+- WiZ bulbs and the computer on the same local network, with UDP 38899 allowed.
+- No `sudo` or administrator permissions required.
 
-## Instalación
+## Installation
 
 ```bash
 cd neiwiz
 ./install.sh
 ```
 
-El instalador es idempotente. Crea un entorno en
-`${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv`, instala `pywizlight`, copia
-el helper a `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py` e
-instala o actualiza el plasmoid `org.neikon.neiwiz` con `kpackagetool6`.
+The installer is idempotent. It creates an environment in
+`${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv`, installs `pywizlight`,
+copies the helper to `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py`,
+and installs or updates the `org.neikon.neiwiz` plasmoid with `kpackagetool6`.
 
-Si `pywizlight` falla con el Python del sistema (por ejemplo, Python 3.14),
-el instalador recrea el entorno con Python 3.13 gestionado por `uv` y vuelve a
-intentarlo. Para actualizar NeiWiz, ejecuta `./install.sh` otra vez.
+If `pywizlight` fails with the system Python (for example, with a very new
+Python release), the installer recreates the environment with Python 3.13
+managed by `uv` and tries again. To update NeiWiz, run `./install.sh` again.
 
-### Añadir a la bandeja
+### Adding it to the system tray
 
-1. Clic derecho en la bandeja del sistema de Plasma.
-2. Elige **Configurar la bandeja del sistema…**.
-3. En **Entradas del sistema**, activa **NeiWiz**.
+1. Right-click the Plasma system tray.
+2. Choose **Configure System Tray…**.
+3. Under **System Entries**, enable **NeiWiz**.
 
-Si el widget no aparece en la lista, comprueba que el paquete está instalado:
+If the widget does not appear in the list, check that the package is installed:
 
 ```bash
 kpackagetool6 --type Plasma/Applet --list | grep org.neikon.neiwiz
 ```
 
-## Uso
+## Usage
 
-- Al abrir el panel, NeiWiz consulta el estado de las bombillas conocidas.
-- El interruptor enciende o apaga la bombilla.
-- El deslizador regula la intensidad. El valor se envía al soltar, no mientras
-  se arrastra.
-- El botón de lápiz cambia el nombre de la bombilla. El nombre se guarda solo en
-  NeiWiz, asociado a su MAC y en `~/.config/neiwiz/bulb-names.json`; no se
-  escribe en la bombilla ni en la app WiZ. Déjalo vacío para volver al nombre
-  automático «Bombilla XXXX».
-- **Actualizar estado** vuelve a consultar todas las bombillas.
-- **Buscar bombillas** fuerza un descubrimiento nuevo. Las bombillas conocidas
-  que no respondan en ese momento se conservan como «Sin conexión»; no se
-  eliminan de la lista.
-- Si una bombilla no responde, se muestra atenuada como «Sin conexión» y no
-  bloquea al resto.
-- Si todas las IPs conocidas fallan, se intenta un descubrimiento automático
-  una vez para recuperar cambios de IP por DHCP.
+- When the panel opens, NeiWiz queries the state of the known bulbs.
+- The switch turns a bulb on or off.
+- The slider adjusts brightness. Dragging sends the value on release;
+  keyboard and mouse-wheel changes are sent immediately.
+- The pencil button renames a bulb. The name is stored only in NeiWiz, keyed by
+  the bulb's MAC address in
+  `${XDG_CONFIG_HOME:-$HOME/.config}/neiwiz/bulb-names.json`; it is not written
+  to the bulb or the WiZ app. Leave it empty to restore the automatic
+  "Bombilla XXXX" name.
+- **Actualizar estado** (Refresh status) queries every bulb again.
+- **Buscar bombillas** (Discover bulbs) forces a new discovery. Known bulbs
+  that do not respond at that moment are kept as "Sin conexión" (Offline); they
+  are not removed from the list.
+- If a bulb does not respond, it is shown dimmed as "Sin conexión" and does not
+  block the others.
+- If every known IP fails, NeiWiz attempts one automatic discovery to recover
+  from DHCP address changes.
 
-El estado se consulta solo al abrir el panel o al usar los botones. Los cambios
-hechos desde el móvil se ven la próxima vez que se abre el panel; no hay
-sincronización en tiempo real ni sondeo periódico.
+State is queried only when the panel opens or when you use the buttons. Changes
+made from your phone appear the next time the panel opens; there is no
+real-time synchronization or periodic polling.
 
-## Arquitectura
+## Architecture
 
 ```text
 Plasma (plasmashell)
-└── Plasmoid QML (org.neikon.neiwiz)
-    ├── Icono en la bandeja
-    ├── Panel: lista, interruptores y deslizadores
-    ├── ExecRunner: Plasma5Support.DataSource (engine "executable")
-    ├── knownBulbs: [{ip, mac}] persistido en la configuración del applet
-    └── nombres: {MAC: nombre} en ~/.config/neiwiz/bulb-names.json
+└── QML Plasmoid (org.neikon.neiwiz)
+    ├── Tray icon
+    ├── Panel: list, switches and sliders
+    ├── ExecRunner: Plasma5Support.DataSource ("executable" engine)
+    ├── knownBulbs: [{ip, mac}] stored in the applet configuration
+    └── names: {MAC: name} in ${XDG_CONFIG_HOME:-$HOME/.config}/neiwiz/bulb-names.json
              │
-             │  comando puntual, termina al responder
+             │  one-shot command, exits after replying
              ▼
 ${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv/bin/python \
   ${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py
-    ├── discover: UDP broadcast + consulta de estado
-    ├── state: consulta las IPs conocidas
-    ├── set: on/off/intensidad
-    ├── names: leer los nombres personalizados
-    └── set-name: guardar o borrar un nombre
+    ├── discover: UDP broadcast + state query
+    ├── state: query known IPs
+    ├── set: on/off/brightness
+    ├── names: read custom names
+    └── set-name: save or clear a name
              │
              ▼
-Bombillas WiZ (UDP 38899)
+WiZ bulbs (UDP 38899)
 ```
 
-El helper devuelve siempre JSON por la salida estándar. Los errores esperados
-salen como `{"ok": false, "error": "..."}` con código 0; una excepción
-inesperada termina con código 1. El QML detecta el código 127 para mostrar la
-ayuda de instalación cuando falta el entorno Python.
+The helper always writes JSON to standard output. Expected errors are returned
+as `{"ok": false, "error": "..."}` with exit code 0; an unexpected exception
+exits with code 1. The QML side treats exit code 127 as a missing Python
+environment and shows the installation help.
 
-No se guarda el estado de encendido: solo la lista de bombillas conocidas
-(`knownBulbs`, en la configuración del applet) y los nombres personalizados
-(`~/.config/neiwiz/bulb-names.json`, con la MAC como clave). Los nombres viven
-fuera de la configuración del applet para sobrevivir a los reinicios de Plasma,
-que pueden recrear la instancia del widget.
+No on/off state is stored: only the list of known bulbs (`knownBulbs`, in the
+applet configuration) and custom names
+(`${XDG_CONFIG_HOME:-$HOME/.config}/neiwiz/bulb-names.json`, keyed by MAC).
+Names live outside the applet configuration so they survive Plasma restarts,
+which can recreate the widget instance.
 
-## Solución de problemas
+## Troubleshooting
 
-### No aparece ninguna bombilla
+### No bulbs appear
 
-- Confirma que las bombillas WiZ están encendidas y en la misma red que el PC.
-- Comprueba que la red no aísla clientes (Wi-Fi de invitados, VLAN separada o
-  aislamiento de clientes suelen bloquear el broadcast y el UDP 38899).
-- Revisa el cortafuegos local: WiZ usa UDP 38899.
-- Prueba el descubrimiento a mano:
+- Make sure the WiZ bulbs are on and on the same network as the computer.
+- Check that the network does not isolate clients (guest Wi-Fi, a separate
+  VLAN, or client isolation often blocks broadcast traffic and UDP 38899).
+- Check the local firewall: WiZ uses UDP 38899.
+- Try discovery manually:
 
 ```bash
 "${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv/bin/python" \
   "${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py" discover
 ```
 
-El helper prueba el broadcast global y, si no responde, el de cada interfaz
-local hasta encontrar bombillas.
+The helper tries the global broadcast first and, if that fails, the broadcast
+address of each local interface until it finds bulbs.
 
-### «Falta el motor de NeiWiz»
+### "Falta el motor de NeiWiz" (Missing NeiWiz engine)
 
-El entorno Python o el helper no están donde el applet los espera. Ejecuta de
-nuevo `./install.sh`.
+The Python environment or the helper is not where the applet expects it. Run
+`./install.sh` again.
 
-### Python 3.14
+### Very new Python versions
 
-`pywizlight` puede fallar con versiones muy nuevas de Python. El instalador
-detecta el fallo y recrea el entorno con Python 3.13 usando `uv`. Si no tienes
-`uv`, instálalo desde <https://docs.astral.sh/uv/> y vuelve a ejecutar
-`./install.sh`.
+`pywizlight` may fail with very new Python releases. The installer detects the
+failure and recreates the environment with Python 3.13 using `uv`. If you do not
+have `uv`, install it from <https://docs.astral.sh/uv/> and run `./install.sh`
+again.
 
-### Una bombilla cambió de IP
+### A bulb changed IP address
 
-NeiWiz guarda la MAC y redescubre automáticamente si todas las IPs conocidas
-fallan. También puedes pulsar **Buscar bombillas** en el panel.
+NeiWiz stores the MAC address and rediscovers automatically if every known IP
+fails. You can also press **Buscar bombillas** in the panel.
 
-### El archivo de nombres está dañado
+### The names file is corrupt
 
-Si `~/.config/neiwiz/bulb-names.json` no contiene un objeto JSON válido, cambiar
-el nombre falla sin tocar el archivo. Haz una copia de seguridad, bórralo o
-repáralo y vuelve a intentarlo.
+If `${XDG_CONFIG_HOME:-$HOME/.config}/neiwiz/bulb-names.json` does not contain a
+valid JSON object, renaming fails without touching the file. Back it up, delete
+or repair it, then try again.
 
-### Los cambios del móvil no aparecen al instante
+### Phone changes do not appear immediately
 
-Es el comportamiento previsto: no hay daemon ni sondeo en segundo plano. Abre
-el panel para actualizar el estado.
+This is expected: there is no daemon or background polling. Open the panel to
+refresh the state.
 
-### El widget no carga
+### The widget does not load
 
 ```bash
 bash scripts/smoke-plasmoid.sh
 journalctl --user --since "10 minutes ago" | grep -i neiwiz
 ```
 
-## Desarrollo
+## Development
 
 ```bash
-# Entorno de desarrollo
+# Development environment
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 
-# Pruebas del helper
+# Helper tests
 .venv/bin/pytest -v
 
-# Validación estática del paquete
+# Static package validation
 bash scripts/check-plasmoid.sh
 
-# Pruebas de comportamiento QML (requiere python3-pyside6)
+# QML behavior tests (requires python3-pyside6)
 bash scripts/qml-test.sh
 
-# Carga real del plasmoid en una ventana
+# Load the plasmoid in a real window
 bash scripts/smoke-plasmoid.sh
 
-# Comprueba la ruta por defecto del helper (configuración limpia)
+# Check the default helper path (clean configuration)
 bash scripts/default-path-check.sh
 
-# Comprueba que un descubrimiento conserva las bombillas conocidas
+# Check that discovery preserves known bulbs
 bash scripts/discover-merge-check.sh
 
-# Instalación + descubrimiento real + smoke test
+# Installation + real discovery + smoke test
 bash scripts/integration-check.sh
 ```
 
-Archivos principales:
+Main files:
 
-- `plasmoid/contents/ui/main.qml`: estado, persistencia, icono y acciones.
+- `plasmoid/contents/ui/main.qml`: state, persistence, icon and actions.
 - `plasmoid/contents/ui/FullRepresentation.qml`: panel.
-- `plasmoid/contents/ui/BulbRow.qml`: fila de bombilla.
-- `plasmoid/contents/ui/ExecRunner.qml`: puente con el motor `executable`.
-- `helper/wizhelper.py`: helper de descubrimiento y control.
-- `tests/test_wizhelper.py`: pruebas del helper.
+- `plasmoid/contents/ui/BulbRow.qml`: bulb row.
+- `plasmoid/contents/ui/ExecRunner.qml`: bridge to the `executable` engine.
+- `helper/wizhelper.py`: discovery and control helper.
+- `tests/test_wizhelper.py`: helper tests.
 
-## Desinstalación
+## Uninstallation
 
 ```bash
 ./uninstall.sh
 ```
 
-Elimina el plasmoid y `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz`, pero conserva la configuración
-del applet y los nombres en `~/.config/neiwiz/bulb-names.json`. Si quieres
-borrar también las bombillas recordadas, elimina el widget de la bandeja y su
-grupo en `~/.config/plasma-org.kde.plasma.desktop-appletsrc`; para borrar los
-nombres, elimina el archivo `~/.config/neiwiz/bulb-names.json`.
+This removes the plasmoid and `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz`, but
+preserves the applet configuration and the names in
+`${XDG_CONFIG_HOME:-$HOME/.config}/neiwiz/bulb-names.json`. To also delete the
+remembered bulbs, remove the widget from the system tray and its group from
+`~/.config/plasma-org.kde.plasma.desktop-appletsrc`; to delete the names, remove
+`${XDG_CONFIG_HOME:-$HOME/.config}/neiwiz/bulb-names.json`.
 
-## Licencia
+## License
 
-MIT. Consulta [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
