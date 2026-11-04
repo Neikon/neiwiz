@@ -81,7 +81,9 @@ Plasma (plasmashell)
 ~/.local/share/neiwiz/venv/bin/python ~/.local/share/neiwiz/wizhelper.py
     ├── discover: UDP broadcast + consulta de estado
     ├── state: consulta las IPs conocidas
-    └── set: on/off/intensidad
+    ├── set: on/off/intensidad
+    ├── names: leer los nombres personalizados
+    └── set-name: guardar o borrar un nombre
              │
              ▼
 Bombillas WiZ (UDP 38899)

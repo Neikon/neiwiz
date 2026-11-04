@@ -21,6 +21,8 @@ PlasmoidItem {
 
     property ListModel bulbsModel: ListModel {}
     property var customNames: ({})
+    property var changedNameKeys: ({})
+    property var nameSaveVersions: ({})
     property bool busy: false
     property bool ready: false
     property bool autoDiscoverTried: false
@@ -125,6 +127,13 @@ PlasmoidItem {
                     }
                 }
             }
+            for (const key in changedNameKeys) {
+                if (Object.prototype.hasOwnProperty.call(customNames, key)) {
+                    names[key] = customNames[key];
+                } else {
+                    delete names[key];
+                }
+            }
             customNames = names;
             updateModelNames();
         });
@@ -149,6 +158,9 @@ PlasmoidItem {
         }
 
         const previous = customNames;
+        const hadPrevious = Object.prototype.hasOwnProperty.call(previous, key);
+        const previousName = hadPrevious ? previous[key] : "";
+        const version = (nameSaveVersions[key] || 0) + 1;
         const next = {};
         for (const existing in customNames) {
             next[existing] = customNames[existing];
@@ -160,19 +172,37 @@ PlasmoidItem {
             delete next[key];
         }
 
+        nameSaveVersions[key] = version;
+        changedNameKeys[key] = true;
         customNames = next;
         updateModelNames();
+        lastError = "";
 
         const command = helperCommandLine(
             "set-name",
             "--mac " + shellQuote(key) + " --name " + shellQuote(trimmed)
         );
         execRunner.run(command, function(stdout, stderr, exitCode) {
+            const previousError = lastError;
             const payload = parsePayload(stdout, stderr, exitCode);
+            if (nameSaveVersions[key] !== version) {
+                lastError = previousError;
+                return;
+            }
             if (!payload) {
-                customNames = previous;
+                const reverted = {};
+                for (const existing in customNames) {
+                    if (existing !== key) {
+                        reverted[existing] = customNames[existing];
+                    }
+                }
+                if (hadPrevious) {
+                    reverted[key] = previousName;
+                }
+                customNames = reverted;
                 updateModelNames();
-                lastError = "No se pudo guardar el nombre.";
+                delete changedNameKeys[key];
+                loadCustomNames();
             }
         });
     }

@@ -1,8 +1,11 @@
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import asyncio
 import importlib.util
 import json
 import subprocess
+import threading
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -306,3 +309,45 @@ def test_main_set_name_outputs_json(helper, monkeypatch, capsys, tmp_path):
     assert code == 0
     assert payload["ok"] is True
     assert payload["names"] == {"aabbccddeeff": "Despacho"}
+
+
+def test_main_set_name_accepts_name_starting_with_dash(
+    helper, monkeypatch, capsys, tmp_path
+):
+    path = tmp_path / "names.json"
+    monkeypatch.setattr(helper, "names_path", lambda: path)
+
+    code = helper.main(["set-name", "--mac", "AABBCCDDEEFF", "--name", "-luz"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["ok"] is True
+    assert helper.load_names(path) == {"aabbccddeeff": "-luz"}
+
+
+def test_set_name_keeps_both_names_when_saves_overlap(helper, tmp_path, monkeypatch):
+    path = tmp_path / "names.json"
+    original_load = helper.load_names
+    start = threading.Barrier(2)
+
+    def slow_load(p=None):
+        names = original_load(p)
+        time.sleep(0.05)
+        return names
+
+    monkeypatch.setattr(helper, "load_names", slow_load)
+
+    def save(mac, name):
+        start.wait(timeout=5)
+        helper.set_name(mac, name, path)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(save, "AABBCCDDEEFF", "Despacho")
+        second = pool.submit(save, "112233445566", "Cocina")
+        first.result(timeout=5)
+        second.result(timeout=5)
+
+    assert helper.load_names(path) == {
+        "aabbccddeeff": "Despacho",
+        "112233445566": "Cocina",
+    }

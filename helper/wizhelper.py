@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import fcntl
 import ipaddress
 import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -102,14 +104,39 @@ def set_name(mac: str, name: str, path: Path | None = None) -> dict[str, Any]:
     if clean is None:
         return {"ok": False, "error": "MAC no válida"}
 
-    names = load_names(path)
-    trimmed = str(name or "").strip()
-    if trimmed:
-        names[clean] = trimmed
-    else:
-        names.pop(clean, None)
-    save_names(names, path)
+    target = names_path() if path is None else path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = target.with_name(target.name + ".lock")
+    with lock_path.open("a", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        names = load_names(target)
+        trimmed = str(name or "").strip()
+        if trimmed:
+            names[clean] = trimmed
+        else:
+            names.pop(clean, None)
+        save_names(names, target)
     return {"ok": True, "names": names}
+
+
+def _fix_name_option(argv: list[str]) -> list[str]:
+    """Turn `--name -luz` into `--name=-luz` so argparse accepts the value."""
+    fixed: list[str] = []
+    index = 0
+    while index < len(argv):
+        value = argv[index]
+        if (
+            value == "--name"
+            and index + 1 < len(argv)
+            and argv[index + 1].startswith("-")
+            and argv[index + 1] != "-"
+        ):
+            fixed.append(f"--name={argv[index + 1]}")
+            index += 2
+            continue
+        fixed.append(value)
+        index += 1
+    return fixed
 
 
 def percent_to_raw(percent: int) -> int:
@@ -316,7 +343,8 @@ def main(argv: list[str] | None = None) -> int:
     action.add_argument("--off", action="store_true")
     action.add_argument("--brightness", type=int)
 
-    args = parser.parse_args(argv)
+    raw = sys.argv[1:] if argv is None else argv
+    args = parser.parse_args(_fix_name_option(raw))
 
     try:
         if args.command == "discover":
