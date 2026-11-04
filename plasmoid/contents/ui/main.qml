@@ -16,8 +16,12 @@ PlasmoidItem {
         PlasmaCore.Types.LeftEdge,
     ].includes(Plasmoid.location)
 
-    readonly property string defaultHelperCommand: "$HOME/.local/share/neiwiz/venv/bin/python"
-    readonly property string defaultHelperScript: "$HOME/.local/share/neiwiz/wizhelper.py"
+    readonly property string dataHome:
+        toLocalPath(StandardPaths.writableLocation(StandardPaths.GenericDataLocation))
+    readonly property string defaultHelperCommand:
+        dataHome + "/neiwiz/venv/bin/python"
+    readonly property string defaultHelperScript:
+        dataHome + "/neiwiz/wizhelper.py"
 
     property ListModel bulbsModel: ListModel {}
     property var customNames: ({})

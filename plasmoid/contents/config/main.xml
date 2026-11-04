@@ -12,11 +12,11 @@
     </entry>
     <entry name="helperCommand" type="String">
       <label>Python executable used to run the NeiWiz helper</label>
-      <default>$HOME/.local/share/neiwiz/venv/bin/python</default>
+      <default/>
     </entry>
     <entry name="helperScript" type="String">
       <label>Path to the NeiWiz helper script</label>
-      <default>$HOME/.local/share/neiwiz/wizhelper.py</default>
+      <default/>
     </entry>
   </group>
 </kcfg>

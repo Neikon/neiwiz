@@ -22,8 +22,9 @@ cd neiwiz
 ./install.sh
 ```
 
-El instalador es idempotente. Crea un entorno en `~/.local/share/neiwiz/venv`,
-instala `pywizlight`, copia el helper a `~/.local/share/neiwiz/wizhelper.py` e
+El instalador es idempotente. Crea un entorno en
+`${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv`, instala `pywizlight`, copia
+el helper a `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py` e
 instala o actualiza el plasmoid `org.neikon.neiwiz` con `kpackagetool6`.
 
 Si `pywizlight` falla con el Python del sistema (por ejemplo, Python 3.14),
@@ -78,7 +79,8 @@ Plasma (plasmashell)
              │
              │  comando puntual, termina al responder
              ▼
-~/.local/share/neiwiz/venv/bin/python ~/.local/share/neiwiz/wizhelper.py
+${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv/bin/python \
+  ${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py
     ├── discover: UDP broadcast + consulta de estado
     ├── state: consulta las IPs conocidas
     ├── set: on/off/intensidad
@@ -111,7 +113,8 @@ que pueden recrear la instancia del widget.
 - Prueba el descubrimiento a mano:
 
 ```bash
-~/.local/share/neiwiz/venv/bin/python ~/.local/share/neiwiz/wizhelper.py discover
+"${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv/bin/python" \
+  "${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py" discover
 ```
 
 El helper intenta el broadcast global y, si no funciona, el broadcast de la
@@ -187,7 +190,7 @@ Archivos principales:
 ./uninstall.sh
 ```
 
-Elimina el plasmoid y `~/.local/share/neiwiz`, pero conserva la configuración
+Elimina el plasmoid y `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz`, pero conserva la configuración
 del applet y los nombres en `~/.config/neiwiz/bulb-names.json`. Si quieres
 borrar también las bombillas recordadas, elimina el widget de la bandeja y su
 grupo en `~/.config/plasma-org.kde.plasma.desktop-appletsrc`; para borrar los

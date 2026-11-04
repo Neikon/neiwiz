@@ -51,11 +51,15 @@ config = (root / "plasmoid" / "contents" / "config" / "main.xml").read_text(enco
 for key in ("knownBulbs", "helperCommand", "helperScript"):
     if f'name="{key}"' not in config:
         sys.exit(f"Falta la clave de configuración {key}")
+if "$HOME/.local/share" in config:
+    sys.exit("main.xml no debe fijar rutas de $HOME; el QML resuelve XDG_DATA_HOME")
 
 main_qml = (root / "plasmoid" / "contents" / "ui" / "main.qml").read_text(encoding="utf-8")
 for token in ("PlasmoidItem", "compactRepresentation", "fullRepresentation"):
     if token not in main_qml:
         sys.exit(f"main.qml no contiene {token}")
+if "StandardPaths.GenericDataLocation" not in main_qml:
+    sys.exit("main.qml no resuelve la ruta del helper con StandardPaths.GenericDataLocation")
 
 print("OK: paquete del plasmoid válido")
 PY

@@ -48,7 +48,8 @@ Plasma (plasmashell)
              │
              │  comando puntual, termina al responder
              ▼
-~/.local/share/neiwiz/venv/bin/python ~/.local/share/neiwiz/wizhelper.py
+${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv/bin/python \
+  ${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py
     ├── discover: UDP broadcast + consulta de estado
     ├── state: getPilot a las IPs conocidas
     ├── set: setPilot (on/off/brightness)
@@ -117,9 +118,9 @@ applet, la siguiente apertura vuelve a descubrir, pero los nombres se conservan.
 
 ## Instalación
 
-- `~/.local/share/neiwiz/venv`: entorno Python con `pywizlight`.
-- `~/.local/share/neiwiz/wizhelper.py`: helper.
-- `~/.local/share/plasma/plasmoids/org.neikon.neiwiz`: plasmoid.
+- `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/venv`: entorno Python con `pywizlight`.
+- `${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz/wizhelper.py`: helper.
+- `${XDG_DATA_HOME:-$HOME/.local/share}/plasma/plasmoids/org.neikon.neiwiz`: plasmoid.
 - `~/.config/neiwiz/bulb-names.json`: nombres personalizados, creado al
   renombrar.
 - `install.sh` es idempotente y no usa `sudo`.

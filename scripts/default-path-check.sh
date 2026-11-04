@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAL_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 TMP_HOME="$(mktemp -d)"
+TMP_DATA="$TMP_HOME/xdg-data"
 LOG="$(mktemp)"
 MARKER="$TMP_HOME/helper-called"
 PID=""
@@ -17,16 +17,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if ! XDG_DATA_HOME="$REAL_DATA_HOME" kpackagetool6 --type Plasma/Applet \
-    --upgrade "$ROOT/plasmoid" >/dev/null 2>&1; then
-    XDG_DATA_HOME="$REAL_DATA_HOME" kpackagetool6 --type Plasma/Applet \
-        --install "$ROOT/plasmoid" >/dev/null
-fi
+mkdir -p "$TMP_DATA/neiwiz/venv/bin" "$TMP_HOME/.config" "$TMP_HOME/.cache"
+ln -s "$(command -v python3)" "$TMP_DATA/neiwiz/venv/bin/python"
 
-mkdir -p "$TMP_HOME/.local/share/neiwiz/venv/bin" "$TMP_HOME/.config" "$TMP_HOME/.cache"
-ln -s "$(command -v python3)" "$TMP_HOME/.local/share/neiwiz/venv/bin/python"
-
-cat > "$TMP_HOME/.local/share/neiwiz/wizhelper.py" <<'PY'
+cat > "$TMP_DATA/neiwiz/wizhelper.py" <<'PY'
 import json
 import os
 import sys
@@ -37,10 +31,13 @@ with open(os.environ["NEIWIZ_TEST_MARKER"], "a", encoding="utf-8") as handle:
 print(json.dumps({"ok": True, "bulbs": []}))
 PY
 
+XDG_DATA_HOME="$TMP_DATA" kpackagetool6 --type Plasma/Applet \
+    --install "$ROOT/plasmoid" >/dev/null
+
 HOME="$TMP_HOME" \
 XDG_CONFIG_HOME="$TMP_HOME/.config" \
 XDG_CACHE_HOME="$TMP_HOME/.cache" \
-XDG_DATA_HOME="$REAL_DATA_HOME" \
+XDG_DATA_HOME="$TMP_DATA" \
 NEIWIZ_TEST_MARKER="$MARKER" \
 QT_FORCE_STDERR_LOGGING=1 \
 QT_LOGGING_RULES="qml.debug=true" \
