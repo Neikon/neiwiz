@@ -31,4 +31,12 @@ TestCase {
         compare(NeiWizModel.clampBrightness(0), 1)
         compare(NeiWizModel.clampBrightness(999), 100)
     }
+
+    function test_stale_refresh_is_discarded() {
+        compare(NeiWizModel.shouldApplyRefresh(3, 4), false)
+    }
+
+    function test_current_refresh_is_applied() {
+        compare(NeiWizModel.shouldApplyRefresh(4, 4), true)
+    }
 }

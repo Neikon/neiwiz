@@ -19,3 +19,7 @@ function applyState(row, state) {
         mac: typeof state.mac === "string" ? state.mac : "",
     };
 }
+
+function shouldApplyRefresh(generation, currentGeneration) {
+    return generation === currentGeneration;
+}

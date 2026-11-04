@@ -29,6 +29,7 @@ PlasmoidItem {
     readonly property bool anyOn: onCount > 0
     property bool allOffline: false
     property string lastError: ""
+    property int stateGeneration: 0
 
     Plasmoid.icon: root.anyOn ? "flashlight-on-symbolic" : "flashlight-off-symbolic"
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
@@ -344,10 +345,14 @@ PlasmoidItem {
             ipArguments.push("--ip " + shellQuote(bulbsModel.get(i).ip));
         }
 
+        const generation = stateGeneration;
         busy = true;
         lastError = "";
         execRunner.run(helperCommandLine("state", ipArguments.join(" ")), function(stdout, stderr, exitCode) {
             busy = false;
+            if (!NeiWizModel.shouldApplyRefresh(generation, stateGeneration)) {
+                return;
+            }
             const payload = parsePayload(stdout, stderr, exitCode);
             if (!payload) {
                 return;
@@ -444,6 +449,7 @@ PlasmoidItem {
         if (item.busy) {
             return;
         }
+        ++stateGeneration;
         lastError = "";
 
         const ip = item.ip;
@@ -466,6 +472,7 @@ PlasmoidItem {
                 bulbsModel.setProperty(current, "on", previous);
             }
             bulbsModel.setProperty(current, "busy", false);
+            ++stateGeneration;
             recompute();
         });
     }
@@ -478,6 +485,7 @@ PlasmoidItem {
         if (item.busy || !item.online || !item.on) {
             return;
         }
+        ++stateGeneration;
         lastError = "";
 
         const ip = item.ip;
@@ -500,6 +508,7 @@ PlasmoidItem {
                 bulbsModel.setProperty(current, "brightness", previous);
             }
             bulbsModel.setProperty(current, "busy", false);
+            ++stateGeneration;
         });
     }
 
