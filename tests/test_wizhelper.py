@@ -351,3 +351,30 @@ def test_set_name_keeps_both_names_when_saves_overlap(helper, tmp_path, monkeypa
         "aabbccddeeff": "Despacho",
         "112233445566": "Cocina",
     }
+
+
+@pytest.mark.parametrize("content", ["{not json", '["not", "an", "object"]'])
+def test_set_name_refuses_to_overwrite_corrupt_file(helper, tmp_path, content):
+    path = tmp_path / "names.json"
+    path.write_text(content, encoding="utf-8")
+
+    result = helper.set_name("AABBCCDDEEFF", "Despacho", path)
+
+    assert result["ok"] is False
+    assert "nombre" in result["error"].lower()
+    assert path.read_text(encoding="utf-8") == content
+
+
+def test_set_name_keeps_unrelated_valid_names(helper, tmp_path):
+    path = tmp_path / "names.json"
+    path.write_text(
+        json.dumps({"112233445566": "Cocina", "not-a-mac": "Basura"}),
+        encoding="utf-8",
+    )
+
+    helper.set_name("AABBCCDDEEFF", "Despacho", path)
+
+    assert helper.load_names(path) == {
+        "112233445566": "Cocina",
+        "aabbccddeeff": "Despacho",
+    }

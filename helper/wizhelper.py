@@ -66,15 +66,10 @@ def names_path() -> Path:
     return base / "neiwiz" / NAMES_FILE
 
 
-def load_names(path: Path | None = None) -> dict[str, str]:
-    """Read custom names, ignoring missing, corrupt or invalid entries."""
-    source = names_path() if path is None else path
-    try:
-        data = json.loads(source.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+def _read_names_file(source: Path) -> dict[str, str]:
+    data = json.loads(source.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
-        return {}
+        raise ValueError("el archivo no contiene un objeto JSON")
 
     names: dict[str, str] = {}
     for key, value in data.items():
@@ -85,6 +80,15 @@ def load_names(path: Path | None = None) -> dict[str, str]:
         if name:
             names[mac] = name
     return names
+
+
+def load_names(path: Path | None = None) -> dict[str, str]:
+    """Read custom names, ignoring missing, corrupt or invalid entries."""
+    source = names_path() if path is None else path
+    try:
+        return _read_names_file(source)
+    except (OSError, ValueError):
+        return {}
 
 
 def save_names(names: dict[str, str], path: Path | None = None) -> None:
@@ -109,7 +113,12 @@ def set_name(mac: str, name: str, path: Path | None = None) -> dict[str, Any]:
     lock_path = target.with_name(target.name + ".lock")
     with lock_path.open("a", encoding="utf-8") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        names = load_names(target)
+        try:
+            names = _read_names_file(target)
+        except FileNotFoundError:
+            names = {}
+        except (OSError, ValueError) as exc:
+            return {"ok": False, "error": f"No se pudo leer la lista de nombres: {exc}"}
         trimmed = str(name or "").strip()
         if trimmed:
             names[clean] = trimmed
