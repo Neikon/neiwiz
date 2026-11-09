@@ -54,7 +54,7 @@ for _ in $(seq 1 40); do
 done
 
 if [[ "$found" -ne 1 ]]; then
-    echo "FALLO: el helper no se ejecutó con discover; llamadas:" >&2
+    echo "FAIL: the helper was not run with discover; calls:" >&2
     if [[ -f "$MARKER" ]]; then
         cat "$MARKER" >&2
     else

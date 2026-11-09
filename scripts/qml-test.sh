@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! python3 -c 'import PySide6.QtQuickTest' >/dev/null 2>&1; then
-    echo "FALLO: faltan los módulos QML de PySide6 (python3-pyside6)." >&2
+    echo "FAIL: PySide6 QML modules are missing (python3-pyside6)." >&2
     exit 2
 fi
 

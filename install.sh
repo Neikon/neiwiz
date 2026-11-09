@@ -14,7 +14,7 @@ fail() {
 }
 
 command -v kpackagetool6 >/dev/null 2>&1 \
-    || fail "no se encontró kpackagetool6; ¿está instalado Plasma 6?"
+    || fail "kpackagetool6 not found; is Plasma 6 installed?"
 
 mkdir -p "$DATA_DIR"
 
@@ -37,7 +37,7 @@ create_venv() {
         if [[ -n "$system_python" ]]; then
             uv venv --python "$system_python" "$VENV"
         else
-            # Sin python3 en PATH, deja que uv elija o descargue un intérprete.
+            # Without python3 in PATH, let uv pick or download an interpreter.
             uv venv "$VENV"
         fi
     else
@@ -60,11 +60,11 @@ fi
 
 if ! install_python_deps; then
     if command -v uv >/dev/null 2>&1; then
-        printf '%s\n' "pywizlight falló con $( "$VENV_PYTHON" -V 2>&1 ); recreando el entorno con Python 3.13 gestionado por uv…"
+        printf '%s\n' "pywizlight failed with $( "$VENV_PYTHON" -V 2>&1 ); recreating the environment with uv-managed Python 3.13…"
         create_venv 3.13
-        install_python_deps || fail "no se pudo instalar pywizlight ni con Python 3.13."
+        install_python_deps || fail "could not install pywizlight even with Python 3.13."
     else
-        fail "no se pudo instalar pywizlight. Instala uv (https://docs.astral.sh/uv/) y vuelve a ejecutar install.sh."
+        fail "could not install pywizlight. Install uv (https://docs.astral.sh/uv/) and run install.sh again."
     fi
 fi
 
@@ -75,19 +75,19 @@ if ! kpackagetool6 --type Plasma/Applet --upgrade "$PLASMOID" >/dev/null 2>&1; t
 fi
 
 cat <<EOF
-NeiWiz instalado correctamente.
+NeiWiz installed successfully.
 
-Añádelo a la bandeja del sistema:
-  1. Clic derecho en la bandeja de Plasma.
-  2. Elige «Configurar la bandeja del sistema…».
-  3. En «Entradas del sistema», activa NeiWiz.
+Add it to the system tray:
+  1. Right-click the Plasma tray.
+  2. Choose “Configure System Tray…”.
+  3. Under “System Entries”, enable NeiWiz.
 
-Para actualizar, vuelve a ejecutar ./install.sh.
-La configuración del applet (bombillas conocidas) se conserva.
+To update, run ./install.sh again.
+The applet configuration (known bulbs) is preserved.
 
-Comprueba el descubrimiento con:
+Check discovery with:
   "$VENV_PYTHON" "$HELPER" discover
 
-El helper y su entorno están en:
+The helper and its environment are in:
   $DATA_DIR
 EOF

@@ -3,7 +3,7 @@
   "KPlugin": {
     "Authors": [{ "Name": "neikon" }],
     "Category": "Hardware",
-    "Description": "Controla tus bombillas WiZ desde la bandeja de Plasma",
+    "Description": "Discover and control WiZ bulbs from the Plasma system tray",
     "EnabledByDefault": true,
     "Icon": "flashlight-on-symbolic",
     "Id": "org.neikon.neiwiz",

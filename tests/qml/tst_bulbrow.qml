@@ -11,7 +11,7 @@ TestCase {
         id: rowComponent
         NeiWiz.BulbRow {
             rowIndex: 3
-            bulbName: "Bombilla EEFF"
+            bulbName: "Bulb EEFF"
             mac: "aabbccddeeff"
             customName: "Despacho"
             online: true
@@ -52,6 +52,6 @@ TestCase {
         let row = createTemporaryObject(rowComponent, testCase)
         let slider = findChild(row, "brightnessSlider")
         verify(slider)
-        compare(slider.Accessible.name, "Brillo de Bombilla EEFF")
+        compare(slider.Accessible.name, "Brightness of Bulb EEFF")
     }
 }

@@ -387,7 +387,7 @@ def test_set_name_refuses_to_overwrite_corrupt_file(helper, tmp_path, content):
     result = helper.set_name("AABBCCDDEEFF", "Despacho", path)
 
     assert result["ok"] is False
-    assert "nombre" in result["error"].lower()
+    assert "names file" in result["error"].lower()
     assert path.read_text(encoding="utf-8") == content
 
 

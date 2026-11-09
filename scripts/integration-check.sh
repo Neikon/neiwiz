@@ -6,7 +6,7 @@ DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/neiwiz"
 
 for script in install.sh uninstall.sh; do
     if [[ ! -f "$ROOT/$script" ]]; then
-        echo "FALLO: falta $script" >&2
+        echo "FAIL: missing $script" >&2
         exit 1
     fi
     bash -n "$ROOT/$script"
@@ -21,12 +21,12 @@ import sys
 
 payload = json.load(sys.stdin)
 if payload.get("ok") is not True:
-    raise SystemExit("FALLO: discover no devolvió ok=true: %r" % (payload,))
+    raise SystemExit("FAIL: discover did not return ok=true: %r" % (payload,))
 
 bulbs = payload.get("bulbs") or []
-print("Bombillas descubiertas: %d" % len(bulbs))
+print("Bulbs discovered: %d" % len(bulbs))
 for bulb in bulbs:
-    state = "encendida" if bulb.get("on") else "apagada"
+    state = "on" if bulb.get("on") else "off"
     print("  - %s (%s, %s)" % (bulb.get("ip"), bulb.get("mac", "?"), state))
 '
 

@@ -72,7 +72,7 @@ Item {
 
             PlasmaComponents3.Label {
                 Layout.fillWidth: true
-                text: root.online ? root.ip : root.ip + " · Sin conexión"
+                text: root.online ? root.ip : root.ip + " · Offline"
                 color: root.online ? Kirigami.Theme.textColor : Kirigami.Theme.negativeTextColor
                 font: Kirigami.Theme.smallFont
                 elide: Text.ElideRight
@@ -82,7 +82,7 @@ Item {
         PlasmaComponents3.Slider {
             id: brightnessSlider
             objectName: "brightnessSlider"
-            Accessible.name: "Brillo de " + root.bulbName
+            Accessible.name: "Brightness of " + root.bulbName
 
             Layout.alignment: Qt.AlignVCenter
             Layout.minimumWidth: Kirigami.Units.gridUnit * 4
@@ -120,14 +120,14 @@ Item {
 
             Layout.alignment: Qt.AlignVCenter
             icon.name: "edit-rename"
-            text: "Cambiar nombre"
+            text: "Rename"
             display: PlasmaComponents3.AbstractButton.IconOnly
             enabled: root.mac.length > 0
             opacity: enabled ? 1 : 0.4
             onClicked: root.renameRequested(root.mac, root.customName)
 
             PlasmaComponents3.ToolTip {
-                text: "Cambiar nombre"
+                text: "Rename"
                 visible: renameButton.hovered
             }
         }

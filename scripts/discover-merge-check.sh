@@ -38,21 +38,39 @@ with open(os.environ["NEIWIZ_TEST_MARKER"], "a", encoding="utf-8") as handle:
 
 command = args[0] if args else ""
 if command == "state":
-    print(json.dumps({"ok": True, "bulbs": [{
-        "ip": "192.168.1.149",
-        "online": False,
-        "on": False,
-        "brightness": 100,
-        "mac": "444f8e318dc4",
-    }]}))
+    print(json.dumps({"ok": True, "bulbs": [
+        {
+            "ip": "192.168.1.149",
+            "online": True,
+            "on": False,
+            "brightness": 100,
+            "mac": "444f8e318dc4",
+        },
+        {
+            "ip": "192.168.1.228",
+            "online": False,
+            "on": False,
+            "brightness": 100,
+            "mac": "cc408560da2c",
+        },
+    ]}))
 elif command == "discover":
-    print(json.dumps({"ok": True, "bulbs": [{
-        "ip": "192.168.1.205",
-        "online": True,
-        "on": False,
-        "brightness": 100,
-        "mac": "444f8e3c2ed4",
-    }]}))
+    print(json.dumps({"ok": True, "bulbs": [
+        {
+            "ip": "192.168.1.149",
+            "online": True,
+            "on": False,
+            "brightness": 100,
+            "mac": "444f8e318dc4",
+        },
+        {
+            "ip": "192.168.1.229",
+            "online": True,
+            "on": False,
+            "brightness": 100,
+            "mac": "cc408560da2c",
+        },
+    ]}))
 else:
     print(json.dumps({"ok": True}))
 PY
@@ -63,7 +81,7 @@ immutability=1
 plugin=org.neikon.neiwiz
 
 [Applets][4][Configuration][General]
-knownBulbs=[{"ip":"192.168.1.149","mac":"444f8e318dc4"}]
+knownBulbs=[{"ip":"192.168.1.149","mac":"444f8e318dc4"},{"ip":"192.168.1.228","mac":"cc408560da2c"}]
 INI
 
 HOME="$TMP_HOME" \
@@ -87,7 +105,7 @@ for line in open(sys.argv[1], encoding="utf-8"):
         break
 PY
 )"
-        if [[ "$known" == *"444f8e3c2ed4"* ]]; then
+        if [[ "$known" == *"192.168.1.229"* ]]; then
             break
         fi
     fi
@@ -95,27 +113,33 @@ PY
 done
 
 if [[ ! -f "$MARKER" ]] || ! grep -q '^state ' "$MARKER"; then
-    echo "FALLO: no se consultó el estado de la bombilla conocida" >&2
+    echo "FAIL: the state of the known bulb was not queried" >&2
     cat "$LOG" >&2
     exit 1
 fi
 
 if ! grep -q '^discover$' "$MARKER"; then
-    echo "FALLO: no se lanzó el descubrimiento tras quedar todo sin conexión" >&2
+    echo "FAIL: discovery was not launched after a bulb went offline" >&2
     cat "$MARKER" >&2
     exit 1
 fi
 
 if [[ "$known" != *"444f8e318dc4"* ]]; then
-    echo "FALLO: el descubrimiento eliminó la bombilla conocida 444F8E318DC4" >&2
+    echo "FAIL: discovery removed the online bulb 444F8E318DC4" >&2
     echo "knownBulbs=$known" >&2
     exit 1
 fi
 
-if [[ "$known" != *"444f8e3c2ed4"* ]]; then
-    echo "FALLO: el descubrimiento no añadió la bombilla nueva 444F8E3C2ED4" >&2
+if [[ "$known" != *"192.168.1.229"* ]]; then
+    echo "FAIL: discovery did not update the moved bulb to 192.168.1.229" >&2
     echo "knownBulbs=$known" >&2
     exit 1
 fi
 
-echo "OK: el descubrimiento conserva las bombillas conocidas"
+if [[ "$known" == *"192.168.1.228"* ]]; then
+    echo "FAIL: discovery kept the stale address 192.168.1.228" >&2
+    echo "knownBulbs=$known" >&2
+    exit 1
+fi
+
+echo "OK: discovery re-maps a bulb whose IP changed"

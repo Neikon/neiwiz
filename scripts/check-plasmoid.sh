@@ -21,12 +21,12 @@ for relative in [
         missing.append(relative)
 
 if missing:
-    sys.exit("Faltan archivos del plasmoid: " + ", ".join(missing))
+    sys.exit("Missing plasmoid files: " + ", ".join(missing))
 
 try:
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
 except json.JSONDecodeError as error:
-    sys.exit(f"metadata.json no es JSON válido: {error}")
+    sys.exit(f"metadata.json is not valid JSON: {error}")
 
 plugin = metadata.get("KPlugin", {})
 checks = {
@@ -45,21 +45,21 @@ expected = {
 }
 for key, value in expected.items():
     if checks[key] != value:
-        sys.exit(f"{key}: se esperaba {value!r}, se encontró {checks[key]!r}")
+        sys.exit(f"{key}: expected {value!r}, found {checks[key]!r}")
 
 config = (root / "plasmoid" / "contents" / "config" / "main.xml").read_text(encoding="utf-8")
 for key in ("knownBulbs", "helperCommand", "helperScript"):
     if f'name="{key}"' not in config:
-        sys.exit(f"Falta la clave de configuración {key}")
+        sys.exit(f"Missing configuration key {key}")
 if "$HOME/.local/share" in config:
-    sys.exit("main.xml no debe fijar rutas de $HOME; el QML resuelve XDG_DATA_HOME")
+    sys.exit("main.xml must not hardcode $HOME paths; the QML resolves XDG_DATA_HOME")
 
 main_qml = (root / "plasmoid" / "contents" / "ui" / "main.qml").read_text(encoding="utf-8")
 for token in ("PlasmoidItem", "compactRepresentation", "fullRepresentation"):
     if token not in main_qml:
-        sys.exit(f"main.qml no contiene {token}")
+        sys.exit(f"main.qml does not contain {token}")
 if "StandardPaths.GenericDataLocation" not in main_qml:
-    sys.exit("main.qml no resuelve la ruta del helper con StandardPaths.GenericDataLocation")
+    sys.exit("main.qml does not resolve the helper path with StandardPaths.GenericDataLocation")
 
-print("OK: paquete del plasmoid válido")
+print("OK: plasmoid package is valid")
 PY

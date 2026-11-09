@@ -68,7 +68,7 @@ def names_path() -> Path:
 def _read_names_file(source: Path) -> dict[str, str]:
     data = json.loads(source.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
-        raise ValueError("el archivo no contiene un objeto JSON")
+        raise ValueError("the file does not contain a JSON object")
 
     names: dict[str, str] = {}
     for key, value in data.items():
@@ -105,7 +105,7 @@ def set_name(mac: str, name: str, path: Path | None = None) -> dict[str, Any]:
     """Save a name, or delete it when the name is empty."""
     clean = safe_mac(mac)
     if clean is None:
-        return {"ok": False, "error": "MAC no válida"}
+        return {"ok": False, "error": "invalid MAC address"}
 
     target = names_path() if path is None else path
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -117,7 +117,7 @@ def set_name(mac: str, name: str, path: Path | None = None) -> dict[str, Any]:
         except FileNotFoundError:
             names = {}
         except (OSError, ValueError) as exc:
-            return {"ok": False, "error": f"No se pudo leer la lista de nombres: {exc}"}
+            return {"ok": False, "error": f"Could not read the names file: {exc}"}
         trimmed = str(name or "").strip()
         if trimmed:
             names[clean] = trimmed
@@ -195,7 +195,7 @@ async def query_bulb(ip: str) -> dict[str, Any]:
         states = await asyncio.wait_for(device.updateState(), timeout=BULB_TIMEOUT)
         state = states[0] if states else None
         if state is None:
-            raise WizLightTimeOutError("respuesta vacía")
+            raise WizLightTimeOutError("empty response")
         return {"ip": ip, "online": True, **parse_pilot_result(state.pilotResult)}
     except Exception as exc:
         return {
@@ -289,13 +289,13 @@ async def set_bulb(ip: str, action: str, value: int | None = None) -> dict[str, 
             await asyncio.wait_for(device.turn_off(), timeout=BULB_TIMEOUT)
         elif action == "brightness":
             if value is None:
-                return {"ok": False, "error": "falta el valor de brillo"}
+                return {"ok": False, "error": "missing brightness value"}
             raw = percent_to_raw(value)
             await asyncio.wait_for(
                 device.turn_on(PilotBuilder(brightness=raw)), timeout=BULB_TIMEOUT
             )
         else:
-            return {"ok": False, "error": f"acción desconocida: {action}"}
+            return {"ok": False, "error": f"unknown action: {action}"}
         return {"ok": True, "ip": ip}
     except Exception as exc:
         return {"ok": False, "error": _error_text(exc)}
@@ -313,17 +313,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="wizhelper")
     commands = parser.add_subparsers(dest="command", required=True)
 
-    commands.add_parser("discover", help="buscar bombillas WiZ en la red")
-    commands.add_parser("names", help="leer los nombres personalizados")
+    commands.add_parser("discover", help="find WiZ bulbs on the network")
+    commands.add_parser("names", help="read the custom names")
 
-    name_parser = commands.add_parser("set-name", help="guardar o borrar un nombre")
+    name_parser = commands.add_parser("set-name", help="save or delete a name")
     name_parser.add_argument("--mac", required=True)
     name_parser.add_argument("--name", default="")
 
-    state_parser = commands.add_parser("state", help="consultar bombillas conocidas")
+    state_parser = commands.add_parser("state", help="query known bulbs")
     state_parser.add_argument("--ip", action="append", required=True, dest="ips")
 
-    set_parser = commands.add_parser("set", help="encender, apagar o regular")
+    set_parser = commands.add_parser("set", help="turn on, turn off or dim")
     set_parser.add_argument("--ip", required=True)
     action = set_parser.add_mutually_exclusive_group(required=True)
     action.add_argument("--on", action="store_true")
@@ -349,12 +349,12 @@ def main(argv: list[str] | None = None) -> int:
                 if ip is not None and ip not in ips:
                     ips.append(ip)
             if not ips:
-                return _emit({"ok": False, "error": "dirección IP no válida"})
+                return _emit({"ok": False, "error": "invalid IP address"})
             return _emit({"ok": True, "bulbs": asyncio.run(query_many(ips))})
 
         ip = safe_ip(args.ip)
         if ip is None:
-            return _emit({"ok": False, "error": "dirección IP no válida"})
+            return _emit({"ok": False, "error": "invalid IP address"})
 
         if args.on:
             action_name, value = "on", None

@@ -22,7 +22,7 @@ QtObject {
             if (timer) {
                 timer.destroy();
             }
-            callback("", "No se pudo iniciar el proceso", 1);
+            callback("", "Could not start the process", 1);
             return "";
         }
 

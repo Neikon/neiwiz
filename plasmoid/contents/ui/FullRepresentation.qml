@@ -16,7 +16,7 @@ PlasmaExtras.Representation {
     property bool allOffline: false
     property string renameMac: ""
 
-    readonly property bool helperMissing: lastError.indexOf("Falta el motor") >= 0
+    readonly property bool helperMissing: lastError.indexOf("engine is missing") >= 0
 
     signal refreshRequested()
     signal discoverRequested()
@@ -52,18 +52,18 @@ PlasmaExtras.Representation {
                     Layout.fillWidth: true
                     text: {
                         if (root.busy) {
-                            return "Actualizando…";
+                            return "Updating…";
                         }
                         if (root.bulbsModel.count === 0) {
-                            return "Sin bombillas";
+                            return "No bulbs";
                         }
                         if (root.allOffline) {
-                            return "Sin conexión";
+                            return "Offline";
                         }
                         if (root.anyOn) {
-                            return root.onCount + (root.onCount === 1 ? " encendida" : " encendidas");
+                            return root.onCount + " on";
                         }
-                        return "Todas apagadas";
+                        return "All off";
                     }
                     font: Kirigami.Theme.smallFont
                     opacity: 0.7
@@ -82,13 +82,13 @@ PlasmaExtras.Representation {
                 id: refreshButton
 
                 icon.name: "view-refresh-symbolic"
-                text: "Actualizar estado"
+                text: "Refresh state"
                 display: PlasmaComponents3.AbstractButton.IconOnly
                 enabled: !root.busy
                 onClicked: root.refreshRequested()
 
                 PlasmaComponents3.ToolTip {
-                    text: "Actualizar estado"
+                    text: "Refresh state"
                     visible: refreshButton.hovered
                 }
             }
@@ -97,13 +97,13 @@ PlasmaExtras.Representation {
                 id: searchButton
 
                 icon.name: "search-symbolic"
-                text: "Buscar bombillas"
+                text: "Discover bulbs"
                 display: PlasmaComponents3.AbstractButton.IconOnly
                 enabled: !root.busy
                 onClicked: root.discoverRequested()
 
                 PlasmaComponents3.ToolTip {
-                    text: "Buscar bombillas"
+                    text: "Discover bulbs"
                     visible: searchButton.hovered
                 }
             }
@@ -195,18 +195,18 @@ PlasmaExtras.Representation {
             visible: root.bulbsModel.count === 0 && !root.busy
             iconName: root.helperMissing ? "dialog-error-symbolic" : "flashlight-off-symbolic"
             text: root.helperMissing
-                ? "Falta el motor de NeiWiz"
-                : (root.lastError.length > 0 ? "No se pudo actualizar" : "No se han encontrado bombillas")
+                ? "NeiWiz engine is missing"
+                : (root.lastError.length > 0 ? "Update failed" : "No bulbs found")
             explanation: root.helperMissing
-                ? "Ejecuta install.sh en la carpeta del proyecto para instalar el helper de Python."
+                ? "Run install.sh in the project folder to install the Python helper."
                 : (root.lastError.length > 0
                     ? root.lastError
-                    : "Comprueba que las bombillas estén encendidas y en la misma red, y vuelve a buscar.")
+                    : "Check that the bulbs are powered on and on the same network, then try again.")
 
             PlasmaComponents3.Button {
                 Layout.alignment: Qt.AlignHCenter
                 icon.name: root.lastError.length > 0 ? "view-refresh-symbolic" : "search-symbolic"
-                text: root.lastError.length > 0 ? "Reintentar" : "Buscar bombillas"
+                text: root.lastError.length > 0 ? "Retry" : "Discover bulbs"
                 onClicked: {
                     if (root.lastError.length > 0) {
                         root.refreshRequested();
@@ -229,7 +229,7 @@ PlasmaExtras.Representation {
 
             PlasmaComponents3.Label {
                 Layout.alignment: Qt.AlignHCenter
-                text: "Buscando bombillas…"
+                text: "Searching for bulbs…"
                 opacity: 0.7
             }
         }
@@ -239,18 +239,18 @@ PlasmaExtras.Representation {
         id: renameDialog
         objectName: "renameDialog"
 
-        title: "Cambiar nombre"
+        title: "Rename"
         preferredWidth: Kirigami.Units.gridUnit * 18
         anchors.centerIn: parent
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
-                text: "Guardar"
+                text: "Save"
                 icon.name: "dialog-ok"
                 onTriggered: renameDialog.accept()
             },
             Kirigami.Action {
-                text: "Cancelar"
+                text: "Cancel"
                 icon.name: "dialog-cancel"
                 onTriggered: renameDialog.reject()
             }
@@ -269,13 +269,13 @@ PlasmaExtras.Representation {
             objectName: "renameField"
 
             Layout.fillWidth: true
-            placeholderText: "Nombre personalizado"
+            placeholderText: "Custom name"
             onAccepted: renameDialog.accept()
         }
 
         PlasmaComponents3.Label {
             Layout.fillWidth: true
-            text: "Déjalo vacío para volver al nombre automático."
+            text: "Leave empty to restore the automatic name."
             font: Kirigami.Theme.smallFont
             opacity: 0.7
             wrapMode: Text.Wrap

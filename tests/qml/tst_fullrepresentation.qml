@@ -14,7 +14,7 @@ TestCase {
                 ListElement {
                     ip: "192.168.1.10"
                     mac: "aabbccddeeff"
-                    name: "Bombilla EEFF"
+                    name: "Bulb EEFF"
                     customName: "Despacho"
                     online: true
                     on: false
@@ -24,8 +24,8 @@ TestCase {
                 ListElement {
                     ip: "192.168.1.11"
                     mac: "112233445566"
-                    name: "Bombilla 5566"
-                    customName: "Cocina"
+                    name: "Bulb 5566"
+                    customName: "Kitchen"
                     online: true
                     on: false
                     brightness: 50
@@ -47,13 +47,13 @@ TestCase {
         verify(field)
         let spy = spyComponent.createObject(testCase, {target: panel})
         verify(spy.valid)
-        panel.openRenameDialog("112233445566", "Cocina")
-        tryCompare(field, "text", "Cocina")
+        panel.openRenameDialog("112233445566", "Kitchen")
+        tryCompare(field, "text", "Kitchen")
         panel.sourceModel.move(1, 0, 1)
         dialog.accept()
         compare(spy.count, 1)
         compare(spy.signalArguments[0][0], "112233445566")
-        compare(spy.signalArguments[0][1], "Cocina")
+        compare(spy.signalArguments[0][1], "Kitchen")
     }
 
     function test_status_shows_updating_while_busy() {
@@ -62,8 +62,8 @@ TestCase {
         verify(label)
         panel.busy = true
         panel.allOffline = true
-        compare(label.text, "Actualizando…")
+        compare(label.text, "Updating…")
         panel.busy = false
-        compare(label.text, "Sin conexión")
+        compare(label.text, "Offline")
     }
 }

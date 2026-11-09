@@ -28,6 +28,7 @@ PlasmoidItem {
     property int onCount: 0
     readonly property bool anyOn: onCount > 0
     property bool allOffline: false
+    property bool anyOffline: false
     property string lastError: ""
     property int stateGeneration: 0
 
@@ -35,10 +36,10 @@ PlasmoidItem {
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
     toolTipMainText: "NeiWiz"
     toolTipSubText: root.bulbsModel.count === 0
-        ? "Abre el panel para buscar bombillas"
+        ? "Open the panel to find bulbs"
         : (root.anyOn
-            ? root.onCount + (root.onCount === 1 ? " encendida" : " encendidas")
-            : "Todas apagadas")
+            ? root.onCount + " on"
+            : "All off")
 
     function toLocalPath(value) {
         const text = String(value || "");
@@ -100,10 +101,10 @@ PlasmoidItem {
         }
         const clean = normalizeMac(mac);
         if (clean.length >= 4) {
-            return "Bombilla " + clean.slice(-4);
+            return "Bulb " + clean.slice(-4);
         }
         const octets = String(ip || "").split(".");
-        return "Bombilla " + (octets.length > 0 ? octets[octets.length - 1] : "WiZ");
+        return "Bulb " + (octets.length > 0 ? octets[octets.length - 1] : "WiZ");
     }
 
     function loadCustomNames() {
@@ -211,7 +212,7 @@ PlasmoidItem {
                 entries = parsed;
             }
         } catch (error) {
-            lastError = "La lista guardada de bombillas no es válida.";
+            lastError = "The saved bulb list is not valid.";
         }
 
         bulbsModel.clear();
@@ -266,39 +267,40 @@ PlasmoidItem {
         }
         onCount = count;
         allOffline = bulbsModel.count > 0 && onlineCount === 0;
+        anyOffline = bulbsModel.count > 0 && onlineCount < bulbsModel.count;
     }
 
     function parsePayload(stdout, stderr, exitCode) {
         if (exitCode === 127) {
-            lastError = "Falta el motor Python de NeiWiz. Ejecuta install.sh.";
+            lastError = "The NeiWiz Python engine is missing. Run install.sh.";
             return null;
         }
         if (exitCode !== 0) {
             const message = String(stderr || "").trim();
             lastError = message.length > 0
                 ? message.split("\n").pop()
-                : "El helper terminó con un error.";
+                : "The helper failed.";
             return null;
         }
 
         const text = String(stdout || "").trim();
         if (text.length === 0) {
-            lastError = "El helper no devolvió ninguna respuesta.";
+            lastError = "The helper returned no response.";
             return null;
         }
 
         try {
             const payload = JSON.parse(text);
             if (!payload || typeof payload !== "object") {
-                throw new Error("respuesta vacía");
+                throw new Error("empty response");
             }
             if (payload.ok !== true) {
-                lastError = String(payload.error || "Error desconocido del helper.");
+                lastError = String(payload.error || "Unknown helper error.");
                 return null;
             }
             return payload;
         } catch (error) {
-            lastError = "La respuesta del helper no es JSON válido.";
+            lastError = "The helper response is not valid JSON.";
             return null;
         }
     }
@@ -358,7 +360,7 @@ PlasmoidItem {
                 return;
             }
             applyStates(payload.bulbs || []);
-            if (allOffline && !autoDiscoverTried) {
+            if (anyOffline && !autoDiscoverTried) {
                 autoDiscoverTried = true;
                 discover();
             }

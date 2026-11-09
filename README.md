@@ -53,14 +53,14 @@ kpackagetool6 --type Plasma/Applet --list | grep org.neikon.neiwiz
   the bulb's MAC address in
   `${XDG_CONFIG_HOME:-$HOME/.config}/neiwiz/bulb-names.json`; it is not written
   to the bulb or the WiZ app. Leave it empty to restore the automatic
-  "Bombilla XXXX" name.
-- **Actualizar estado** (Refresh status) queries every bulb again.
-- **Buscar bombillas** (Discover bulbs) forces a new discovery. Known bulbs
-  that do not respond at that moment are kept as "Sin conexión" (Offline); they
+  "Bulb XXXX" name.
+- **Refresh state** queries every bulb again.
+- **Discover bulbs** forces a new discovery. Known bulbs
+  that do not respond at that moment are kept as "Offline"; they
   are not removed from the list.
-- If a bulb does not respond, it is shown dimmed as "Sin conexión" and does not
+- If a bulb does not respond, it is shown dimmed as "Offline" and does not
   block the others.
-- If every known IP fails, NeiWiz attempts one automatic discovery to recover
+- If any known IP fails, NeiWiz attempts one automatic discovery to recover
   from DHCP address changes.
 
 State is queried only when the panel opens or when you use the buttons. Changes
@@ -121,7 +121,7 @@ which can recreate the widget instance.
 The helper tries the global broadcast first and, if that fails, the broadcast
 address of each local interface until it finds bulbs.
 
-### "Falta el motor de NeiWiz" (Missing NeiWiz engine)
+### "NeiWiz engine is missing"
 
 The Python environment or the helper is not where the applet expects it. Run
 `./install.sh` again.
@@ -136,7 +136,7 @@ again.
 ### A bulb changed IP address
 
 NeiWiz stores the MAC address and rediscovers automatically if every known IP
-fails. You can also press **Buscar bombillas** in the panel.
+fails. You can also press **Discover bulbs** in the panel.
 
 ### The names file is corrupt
 
